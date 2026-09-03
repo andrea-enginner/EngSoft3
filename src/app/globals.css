@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf8fc;
-  --foreground: #25212b;
+  --background: #f7f7fb;
+  --foreground: #1f2937;
   --surface: #ffffff;
-  --soft: #f5f1fa;
-  --border: #ded6e8;
-  --muted: #746e7c;
-  --accent: #f2a97e;
+  --soft: #f5f3ff;
+  --border: #e6e4ee;
+  --muted: #6b7280;
+  --accent: #f97316;
 }
 
 @theme inline {
@@ -18,12 +18,23 @@
   --color-border: var(--border);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
-  --color-primary-50: #f5f1fa;
-  --color-primary-100: #eee8f6;
-  --color-primary-300: #b9a4d8;
-  --color-primary-500: #5d3a8c;
-  --color-primary-700: #4a2e70;
-  --color-primary-900: #3d245f;
+
+  /* Identidade do Ciclo */
+  --color-primary-50: #f5f3ff;
+  --color-primary-100: #ede9fe;
+  --color-primary-300: #c4b5fd;
+  --color-primary-500: #7c3aed;
+  --color-primary-700: #6d28d9;
+  --color-primary-900: #4c1d95;
+
+  /* Cores dos dois tipos de anúncio */
+  --color-doacao: #f97316;
+  --color-doacao-claro: #fb923c;
+  --color-emprestimo: #0d9488;
+  --color-emprestimo-claro: #2dd4bf;
+
+  --color-estrela: #f59e0b;
+
   --font-sans: Arial, Helvetica, sans-serif;
 }
 
