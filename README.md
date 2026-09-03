@@ -66,7 +66,7 @@ src/app/cadastro/page.tsx
 src/app/dashboard/page.tsx
 ```
 
-Componentes que serão usados por mais de uma tela devem ficar em `src/components`. Antes de alterar um componente compartilhado, avise a equipe para evitar que duas pessoas editem o mesmo arquivo ao mesmo tempo.
+Componentes que serão usados por mais de uma tela devem ficar em `src/views`. Antes de alterar um componente compartilhado — ou qualquer arquivo de `src/models` —, avise a equipe para evitar que duas pessoas editem o mesmo arquivo ao mesmo tempo.
 
 Para reduzir conflitos:
 
@@ -83,19 +83,29 @@ git fetch origin
 git merge origin/main
 ```
 
-## Estrutura inicial
+## Estrutura do projeto
+
+O projeto segue **MVC em camadas**. A explicação completa, com as regras de
+dependência e o passo a passo para criar uma funcionalidade nova, está em
+[ARQUITETURA.md](ARQUITETURA.md) — leia antes do primeiro commit.
 
 ```text
 src/
-└── app/
-    ├── globals.css  # estilos globais e Tailwind
-    ├── layout.tsx   # layout e metadados da aplicação
-    └── page.tsx     # página inicial
-public/              # arquivos estáticos
+├── app/              # ROTEAMENTO — URLs, layouts e páginas finas
+├── controllers/      # CONTROLLER — Server Actions e leitura para as páginas
+├── models/           # MODEL — entidades, repositórios e regras de negócio
+│   ├── entities/
+│   ├── repositories/
+│   └── services/
+├── views/            # VIEW — componentes React de apresentação
+└── lib/              # utilitários sem regra de negócio
+public/               # arquivos estáticos
 ```
 
-À medida que o projeto crescer, componentes reutilizáveis podem ser colocados em `src/components`, regras de negócio em `src/services` e tipos compartilhados em `src/types`.
+Resumo da regra: **página chama controller, controller chama service, service
+chama repository.** Nunca pule etapas e nunca volte (um service não importa uma
+view).
 
 ## Identidade visual
 
-Os tokens da paleta estão definidos em `src/app/globals.css`. Prefira os nomes semânticos (`background`, `surface`, `soft`, `border`, `muted`, `foreground` e `accent`) e a escala `primary-50` a `primary-900` nas classes do Tailwind. Isso mantém a identidade visual consistente e facilita futuras alterações de tema.
+Os tokens da paleta estão definidos em `src/app/globals.css`. Prefira os nomes semânticos (`background`, `surface`, `soft`, `border`, `muted`, `foreground` e `accent`) e a escala `primary-50` a `primary-900` nas classes do Tailwind. Há ainda `doacao`, `emprestimo` (com as variantes `-claro`, usadas nos badges dos cartões) e `estrela`. Isso mantém a identidade visual consistente e facilita futuras alterações de tema.

@@ -1,44 +1,83 @@
-const technologies = ["TypeScript", "Next.js", "React", "Tailwind CSS"];
+/**
+ * Rota `/` — feed de itens.
+ *
+ * ESTA PÁGINA É SÓ O VISUAL. A lista abaixo está fixa no arquivo de
+ * propósito, só para desenhar a tela.
+ *
+ * Quando você montar as camadas, o caminho é:
+ *   1. mover o tipo `ItemFeed` para `src/models/entities/item.ts`;
+ *   2. criar `src/models/repositories/item.repository.ts` (de onde o dado vem);
+ *   3. criar `src/models/services/item.service.ts` (as regras: filtro, ordem);
+ *   4. criar `src/controllers/item.controller.ts` (o que a página chama);
+ *   5. apagar a constante ITENS daqui e trocar por:
+ *        const itens = await itemController.carregarFeed();
+ *
+ * A página fica com duas linhas: uma chamada ao controller e o JSX.
+ */
 
-export default function Home() {
+import { BarraFiltros } from "@/views/feed/BarraFiltros";
+import { CardItem, type ItemFeed } from "@/views/feed/CardItem";
+
+// TODO: dado fixo temporário — sai daqui assim que existir o Model.
+const ITENS: ItemFeed[] = [
+  {
+    id: "1",
+    tipo: "doacao",
+    titulo: "Furadeira Makita 12V com Maleta",
+    descricao:
+      "Ainda funciona, mas tem que trocar a bateria por uma nova. Acompanha maleta e brocas.",
+    condicao: "Quase Novo",
+    local: "Petrolina, PE",
+    favorito: true,
+  },
+  {
+    id: "2",
+    tipo: "emprestimo",
+    titulo: "Livro: O Design do Dia a Dia",
+    descricao:
+      "Empresto por até 15 dias. Ótima leitura para designers e quem gosta de usabilidade.",
+    condicao: "Bem Cuidado",
+    local: "Pinheiros, SP",
+    avaliacao: 4.9,
+  },
+  {
+    id: "3",
+    tipo: "doacao",
+    titulo: "Violão Acústico Giannini",
+    descricao:
+      "Doando pra quem estiver precisando. Precisa afinar e trocar as cordas.",
+    condicao: "Usado com marcas",
+    local: "Centro, SP",
+  },
+  {
+    id: "4",
+    tipo: "emprestimo",
+    titulo: "Barraca de Camping 4 Pessoas",
+    descricao:
+      "Disponível para empréstimo aos finais de semana. Ideal para trilhas e acampamentos.",
+    condicao: "Excelente",
+    local: "Butantã, SP",
+    avaliacao: 4.9,
+  },
+];
+
+export default function FeedPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-6 py-16 text-foreground">
-      <section className="relative w-full max-w-3xl overflow-hidden rounded-3xl border border-border bg-surface p-8 shadow-xl shadow-primary-900/10 sm:p-12">
-        <div
-          className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-primary-100 blur-3xl"
-          aria-hidden="true"
-        />
+    <main className="mx-auto max-w-6xl px-6 py-8">
+      <BarraFiltros />
 
-        <span className="relative inline-flex rounded-full bg-primary-100 px-3 py-1 text-sm font-semibold text-primary-700 ring-1 ring-primary-300/60">
-          Engenharia de Software III
+      <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {ITENS.map((item) => (
+          <CardItem key={item.id} item={item} />
+        ))}
+      </div>
+
+      {/* Vira <button onClick={...}> ou um <Link> paginado depois */}
+      <div className="mt-10 flex justify-center">
+        <span className="rounded-full bg-primary-100 px-6 py-2.5 text-sm font-semibold text-primary-700">
+          Carregar mais itens
         </span>
-
-        <h1 className="relative mt-6 max-w-2xl text-4xl font-bold tracking-tight text-primary-900 sm:text-6xl">
-          Base do projeto pronta para construir em equipe.
-        </h1>
-
-        <p className="relative mt-6 max-w-2xl text-lg leading-8 text-muted">
-          O ambiente inicial está configurado. Crie sua branch, desenvolva uma
-          tarefa por vez e abra um pull request para revisão antes de integrar à
-          branch principal.
-        </p>
-
-        <ul
-          className="relative mt-10 flex flex-wrap gap-3"
-          aria-label="Tecnologias"
-        >
-          {technologies.map((technology) => (
-            <li
-              key={technology}
-              className="rounded-lg border border-border bg-soft px-4 py-2 text-sm font-semibold text-primary-700"
-            >
-              {technology}
-            </li>
-          ))}
-        </ul>
-
-        <div className="relative mt-10 h-1.5 w-24 rounded-full bg-accent" />
-      </section>
+      </div>
     </main>
   );
 }
