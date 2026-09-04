@@ -14,6 +14,10 @@ const NAVEGACAO = [
 
 export function Cabecalho() {
   const pathname = usePathname();
+  //Para que não apareça o cabeçalho na página de login e cadastro, pois essas páginas não precisam do cabeçalho.
+  if (pathname === "/login" || pathname === "/cadastro") {
+  return null;
+  }
   return <header className="sticky top-0 z-50 border-b border-border bg-surface/95 backdrop-blur">
     <div className="mx-auto flex h-[72px] max-w-7xl items-center gap-8 px-5 sm:px-8">
       <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Ciclo — início"><Image src="/ciclo-logo.png" alt="" width={38} height={38} className="h-9 w-9 object-contain" priority /><span className="text-xl font-bold tracking-tight text-primary-700">Ciclo</span></Link>
