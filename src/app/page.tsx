@@ -28,6 +28,7 @@ const ITENS: ItemFeed[] = [
       "Ainda funciona, mas tem que trocar a bateria por uma nova. Acompanha maleta e brocas.",
     condicao: "Quase Novo",
     local: "Petrolina, PE",
+    imagem: "/itens/furadeira_2000.jpg",  
     favorito: true,
   },
   {
@@ -38,6 +39,7 @@ const ITENS: ItemFeed[] = [
       "Empresto por até 15 dias. Ótima leitura para designers e quem gosta de usabilidade.",
     condicao: "Bem Cuidado",
     local: "Pinheiros, SP",
+    imagem: "/itens/livro_legal.jpg",  
     avaliacao: 4.9,
   },
   {
@@ -48,6 +50,7 @@ const ITENS: ItemFeed[] = [
       "Doando pra quem estiver precisando. Precisa afinar e trocar as cordas.",
     condicao: "Usado com marcas",
     local: "Centro, SP",
+    imagem: "/itens/violao_guitarra.jpg",
   },
   {
     id: "4",
@@ -57,13 +60,14 @@ const ITENS: ItemFeed[] = [
       "Disponível para empréstimo aos finais de semana. Ideal para trilhas e acampamentos.",
     condicao: "Excelente",
     local: "Butantã, SP",
+    imagem: "/itens/acampar_lindo.jpg",  
     avaliacao: 4.9,
   },
 ];
 
 export default function FeedPage() {
   return (
-    <main className="mx-auto max-w-6xl px-6 py-8">
+    <main className="mx-auto w-full max-w-[1280px] px-6 py-8">
       <BarraFiltros />
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -73,7 +77,7 @@ export default function FeedPage() {
       </div>
 
       {/* Vira <button onClick={...}> ou um <Link> paginado depois */}
-      <div className="mt-10 flex justify-center">
+      <div className="mt-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <span className="rounded-full bg-primary-100 px-6 py-2.5 text-sm font-semibold text-primary-700">
           Carregar mais itens
         </span>
