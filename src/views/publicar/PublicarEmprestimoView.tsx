@@ -176,7 +176,7 @@ export function PublicarEmprestimoView() {
             <div className="mt-5 flex flex-wrap gap-4">
               {fotos.length < MAX_FOTOS && (
                 <label className="flex h-32 w-32 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary-300 bg-transparent text-center text-sm font-medium text-muted transition hover:border-primary-500 hover:text-primary-700 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100">
-                  <input ref={inputFotosRef} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={selecionarFotos} aria-invalid={Boolean(erros.fotos)} />
+                  <input ref={inputFotosRef} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={selecionarFotos} aria-invalid={Boolean(erros.fotos)} aria-describedby={erros.fotos ? "ajuda-fotos erro-fotos" : "ajuda-fotos"} />
                   <IconeCamera />
                   <span className="mt-2">Adicionar foto</span>
                 </label>
@@ -241,7 +241,7 @@ export function PublicarEmprestimoView() {
 
           <div className="border-t border-border pt-6">
             <button type="submit" className="w-full rounded-xl bg-primary-700 px-5 py-4 font-semibold text-white shadow-sm hover:bg-primary-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">Publicar empréstimo</button>
-            <p className="mt-4 text-center text-xs text-muted">Ao publicar, você concorda com nossos <span className="font-medium text-primary-700 underline">Termos de Uso</span>.</p>
+            <p className="mt-4 text-center text-xs text-muted">Ao publicar, você concorda com nossos <span className="font-medium">Termos de Uso</span>.</p>
             <p className={`mt-4 text-center text-sm font-medium ${status.startsWith("Empréstimo pronto") ? "text-primary-700" : "text-red-700"}`} role="status" aria-live="polite">{status}</p>
           </div>
         </form>
