@@ -168,3 +168,21 @@ export function IconeCiclo({ className }: PropsIcone) {
     </svg>
   );
 }
+
+export function IconeLapis({ className }: PropsIcone) {
+  return (
+    <svg {...BASE} className={className}>
+      <path d="M4 20h4L19.5 8.5a2.12 2.12 0 0 0-3-3L5 17v3Z" />
+      <path d="M14.5 6.5l3 3" />
+    </svg>
+  );
+}
+
+export function IconeEngrenagem({ className }: PropsIcone) {
+  return (
+    <svg {...BASE} className={className}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2.5 13 5a7.4 7.4 0 0 1 2 .8l2.3-1 1.4 1.4-1 2.3q.5.9.8 2l2.5 1v2l-2.5 1a7.4 7.4 0 0 1-.8 2l1 2.3-1.4 1.4-2.3-1a7.4 7.4 0 0 1-2 .8l-1 2.5h-2l-1-2.5a7.4 7.4 0 0 1-2-.8l-2.3 1-1.4-1.4 1-2.3a7.4 7.4 0 0 1-.8-2l-2.5-1v-2l2.5-1q.3-1.1.8-2l-1-2.3 1.4-1.4 2.3 1a7.4 7.4 0 0 1 2-.8l1-2.5Z" />
+    </svg>
+  );
+}
