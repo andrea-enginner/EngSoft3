@@ -105,7 +105,7 @@ export function LoginForm() {
         </div>
 
         <Link
-            href="/"
+            href="/feed"
             className="
                 mt-7
                 flex
