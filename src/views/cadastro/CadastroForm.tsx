@@ -151,7 +151,7 @@ export function CadastroForm() {
         />
 
         <Link
-          href="/"
+          href="/feed"
           className="
             mt-1
             flex
