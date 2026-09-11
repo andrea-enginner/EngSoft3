@@ -9,8 +9,9 @@
 import type { EstatisticasPerfil } from "@/models/entities/perfil";
 import type { Usuario } from "@/models/entities/usuario";
 import { formatarAno } from "@/lib/datas";
-import { IconeCiclo, IconeEngrenagem, IconeEstrela, IconeLocal, IconeTrocas } from "@/views/comuns/Icones";
+import { IconeCiclo, IconeEstrela, IconeLocal, IconeTrocas } from "@/views/comuns/Icones";
 import { Avatar } from "@/views/perfil/Avatar";
+import { ConfiguracoesModal } from "@/views/perfil/ConfiguracoesModal";
 import { EditarPerfilModal } from "@/views/perfil/EditarPerfilModal";
 
 type PropsCartaoPerfil = {
@@ -73,14 +74,7 @@ export function CartaoPerfil({ usuario, estatisticas, demonstracao }: PropsCarta
 
         <div className="flex flex-col gap-2.5 sm:items-end">
           <EditarPerfilModal usuario={usuario} />
-
-          <button
-            type="button"
-            className="flex items-center justify-center gap-2 rounded-xl bg-primary-50 px-5 py-2.5 text-sm font-semibold text-primary-700 hover:bg-primary-100"
-          >
-            <IconeEngrenagem className="h-4 w-4" />
-            Configurações
-          </button>
+          <ConfiguracoesModal usuario={usuario} />
         </div>
       </div>
 

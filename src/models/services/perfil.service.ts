@@ -7,30 +7,50 @@
 
 import type { Anuncio } from "@/models/entities/anuncio";
 import type { Avaliacao } from "@/models/entities/avaliacao";
+import type { Emprestimo, StatusEmprestimo } from "@/models/entities/emprestimo";
 import type { EstatisticasPerfil, Perfil } from "@/models/entities/perfil";
-import type { DadosBasicos, SessaoUsuario, Usuario } from "@/models/entities/usuario";
+import type { DadosBasicos, DadosLocalizacao, SessaoUsuario, Usuario } from "@/models/entities/usuario";
 import { contarAtivos } from "@/models/entities/anuncio";
 import { calcularReputacao } from "@/models/entities/avaliacao";
 import { anunciosDeDemonstracao, buscarAnunciosDoUsuario } from "@/models/repositories/anuncio.repository";
 import { buscarAvaliacoesDoUsuario } from "@/models/repositories/avaliacao.repository";
-import { buscarUsuario, salvarDadosBasicos, usuarioDeDemonstracao } from "@/models/repositories/usuario.repository";
+import {
+  buscarUsuario,
+  salvarDadosBasicos,
+  salvarLocalizacao,
+  usuarioDeDemonstracao,
+} from "@/models/repositories/usuario.repository";
 import { listarMeusEmprestimos } from "@/models/services/emprestimo.service";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const UF_VALIDA = /^[A-Z]{2}$/;
 
 export class DadosInvalidosError extends Error {}
 
 /**
- * O total de empréstimos vem de outra funcionalidade. Se aquela tabela ainda
- * não existir, o perfil continua abrindo com zero em vez de quebrar a página.
+ * O histórico e o total de empréstimos vêm de outra funcionalidade. Se aquela
+ * tabela ainda não existir, o perfil continua abrindo com listas vazias em
+ * vez de quebrar a página — inclusive para um perfil novo, que ainda não tem
+ * nenhum empréstimo.
  */
-async function contarEmprestimos(): Promise<number> {
+async function buscarEmprestimos(): Promise<Emprestimo[]> {
   try {
     const { dados } = await listarMeusEmprestimos();
-    return dados.length;
+    return dados;
   } catch {
-    return 0;
+    return [];
   }
+}
+
+/**
+ * Um empréstimo entra no histórico quando a transação já terminou. Nesta
+ * regra de negócio, "devolução" já conta como concluído — não é uma etapa
+ * intermediária.
+ */
+const STATUS_NO_HISTORICO: StatusEmprestimo[] = ["concluido", "devolucao"];
+
+function montarHistorico(emprestimos: Emprestimo[]): Emprestimo[] {
+  return emprestimos.filter((emprestimo) => STATUS_NO_HISTORICO.includes(emprestimo.status));
 }
 
 function montarEstatisticas(anuncios: Anuncio[], avaliacoes: Avaliacao[], emprestimos: number): EstatisticasPerfil {
@@ -46,16 +66,19 @@ export async function carregarPerfil(sessao: SessaoUsuario | null): Promise<Perf
     buscarUsuario(sessao),
     buscarAnunciosDoUsuario(sessao),
     buscarAvaliacoesDoUsuario(sessao),
-    contarEmprestimos(),
+    buscarEmprestimos(),
   ]);
+
+  const historico = montarHistorico(emprestimos);
 
   if (!usuario) {
     const demonstracao = anunciosDeDemonstracao();
     return {
       usuario: usuarioDeDemonstracao(),
-      estatisticas: montarEstatisticas(demonstracao, [], emprestimos),
+      estatisticas: montarEstatisticas(demonstracao, [], emprestimos.length),
       anuncios: demonstracao,
       avaliacoes: [],
+      historico,
       fonte: "demonstracao",
     };
   }
@@ -63,9 +86,10 @@ export async function carregarPerfil(sessao: SessaoUsuario | null): Promise<Perf
   const publicados = anuncios ?? [];
   return {
     usuario,
-    estatisticas: montarEstatisticas(publicados, avaliacoes, emprestimos),
+    estatisticas: montarEstatisticas(publicados, avaliacoes, emprestimos.length),
     anuncios: publicados,
     avaliacoes,
+    historico,
     fonte: "supabase",
   };
 }
@@ -81,8 +105,8 @@ function validar(dados: DadosBasicos): DadosBasicos {
   if (!EMAIL.test(email)) {
     throw new DadosInvalidosError("Informe um e-mail válido.");
   }
-  if (avatar && !/^(https?:\/\/|\/)/.test(avatar)) {
-    throw new DadosInvalidosError("O endereço da foto deve começar com http://, https:// ou /.");
+  if (avatar && !/^(https?:\/\/|\/|data:image\/)/.test(avatar)) {
+    throw new DadosInvalidosError("A foto enviada não é uma imagem válida.");
   }
 
   return { nome, email, avatar: avatar || null };
@@ -101,6 +125,40 @@ export async function atualizarDadosBasicos(
   }
 
   await salvarDadosBasicos(sessao, validados);
+  const atualizado = await buscarUsuario(sessao);
+  if (!atualizado) {
+    throw new DadosInvalidosError("Não foi possível confirmar a atualização do perfil.");
+  }
+  return atualizado;
+}
+
+function validarLocalizacao(dados: DadosLocalizacao): DadosLocalizacao {
+  const cidade = dados.cidade.trim();
+  const estado = dados.estado.trim().toUpperCase();
+
+  if (cidade.length < 2) {
+    throw new DadosInvalidosError("Informe uma cidade válida.");
+  }
+  if (!UF_VALIDA.test(estado)) {
+    throw new DadosInvalidosError("Informe a sigla do estado com 2 letras (ex: PE).");
+  }
+
+  return { cidade, estado };
+}
+
+export async function atualizarLocalizacao(
+  sessao: SessaoUsuario | null,
+  dados: DadosLocalizacao,
+): Promise<Usuario> {
+  const validados = validarLocalizacao(dados);
+
+  if (!sessao) {
+    throw new DadosInvalidosError(
+      "Entre na sua conta para salvar as alterações de localização.",
+    );
+  }
+
+  await salvarLocalizacao(sessao, validados);
   const atualizado = await buscarUsuario(sessao);
   if (!atualizado) {
     throw new DadosInvalidosError("Não foi possível confirmar a atualização do perfil.");

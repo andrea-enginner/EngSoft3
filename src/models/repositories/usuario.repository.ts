@@ -5,7 +5,7 @@
  * a tradução do registro cru para a entidade do domínio.
  */
 
-import type { DadosBasicos, SessaoUsuario, Usuario } from "@/models/entities/usuario";
+import type { DadosBasicos, DadosLocalizacao, SessaoUsuario, Usuario } from "@/models/entities/usuario";
 import { atualizarSupabase, consultarSupabase } from "@/lib/supabase/rest";
 
 /**
@@ -17,6 +17,8 @@ const USUARIO_DEMONSTRACAO: Usuario = {
   nome: "João Pedro",
   email: "joao.pedro@exemplo.com",
   local: "Petrolina, PE",
+  cidade: "Petrolina",
+  estado: "PE",
   avatar: null,
   membroDesde: "2022-03-14T00:00:00.000Z",
 };
@@ -32,13 +34,17 @@ type RegistroPerfil = {
 };
 
 function normalizar(registro: RegistroPerfil, sessao: SessaoUsuario): Usuario {
-  const local = [registro.cidade, registro.estado].filter(Boolean).join(", ");
+  const cidade = registro.cidade?.trim() ?? "";
+  const estado = registro.estado?.trim() ?? "";
+  const local = [cidade, estado].filter(Boolean).join(", ");
 
   return {
     id: registro.id,
     nome: registro.nome?.trim() || "Sem nome",
     email: registro.email?.trim() || sessao.email,
     local: local || "Local não informado",
+    cidade,
+    estado,
     avatar: registro.avatar_url?.trim() || null,
     membroDesde: registro.criado_em ?? new Date().toISOString(),
   };
@@ -67,5 +73,15 @@ export async function salvarDadosBasicos(
     nome: dados.nome,
     email: dados.email,
     avatar_url: dados.avatar,
+  });
+}
+
+export async function salvarLocalizacao(
+  sessao: SessaoUsuario,
+  dados: DadosLocalizacao,
+): Promise<void> {
+  await atualizarSupabase(`perfis?id=eq.${sessao.usuarioId}`, sessao.token, {
+    cidade: dados.cidade,
+    estado: dados.estado,
   });
 }

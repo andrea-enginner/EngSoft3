@@ -7,6 +7,7 @@
 
 import type { Anuncio } from "@/models/entities/anuncio";
 import type { Avaliacao, Reputacao } from "@/models/entities/avaliacao";
+import type { Emprestimo } from "@/models/entities/emprestimo";
 import type { Usuario } from "@/models/entities/usuario";
 
 export type EstatisticasPerfil = {
@@ -20,5 +21,6 @@ export type Perfil = {
   estatisticas: EstatisticasPerfil;
   anuncios: Anuncio[];
   avaliacoes: Avaliacao[];
+  historico: Emprestimo[];
   fonte: "supabase" | "demonstracao";
 };
