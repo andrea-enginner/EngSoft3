@@ -327,7 +327,7 @@ export function PublicarEmprestimoView() {
                   <p className="text-sm text-muted">
                     {quantidadeNumerica} {quantidadeNumerica === 1 ? UNIDADES_SINGULAR[duracaoUnidade] : duracaoUnidade} × {FORMATADOR_BRL.format(valorUnitarioCentavos / 100)} por {UNIDADES_SINGULAR[duracaoUnidade]}
                   </p>
-                  <p className="mt-1 text-lg font-bold text-primary-700">Total estimado: {FORMATADOR_BRL.format((quantidadeNumerica * valorUnitarioCentavos) / 100)}</p>
+                  <p className="mt-1 text-lg font-bold text-primary-700">Valor total: {FORMATADOR_BRL.format((quantidadeNumerica * valorUnitarioCentavos) / 100)}</p>
                 </aside>
               ) : null}
 
