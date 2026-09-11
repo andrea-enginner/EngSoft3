@@ -40,6 +40,7 @@ declare
   v_usuario_id uuid := auth.uid();
   v_anuncio public.anuncios%rowtype;
   v_fim_em timestamptz;
+  v_fator_segundos bigint;
   v_total bigint;
   v_id uuid;
 begin
@@ -58,12 +59,14 @@ begin
     raise exception 'O anúncio não possui condições completas';
   end if;
 
-  v_fim_em := case v_anuncio.duracao_unidade
-    when 'minutos' then p_inicio_em + make_interval(mins => v_anuncio.duracao_quantidade)
-    when 'horas' then p_inicio_em + make_interval(hours => v_anuncio.duracao_quantidade)
-    when 'dias' then p_inicio_em + make_interval(days => v_anuncio.duracao_quantidade)
-    when 'semanas' then p_inicio_em + make_interval(weeks => v_anuncio.duracao_quantidade)
+  v_fator_segundos := case v_anuncio.duracao_unidade
+    when 'minutos' then 60
+    when 'horas' then 3600
+    when 'dias' then 86400
+    when 'semanas' then 604800
   end;
+  v_fim_em := p_inicio_em
+    + (v_anuncio.duracao_quantidade::bigint * v_fator_segundos)::double precision * interval '1 second';
   v_total := v_anuncio.valor_unitario_centavos::bigint * v_anuncio.duracao_quantidade;
 
   insert into public.solicitacoes_emprestimo (

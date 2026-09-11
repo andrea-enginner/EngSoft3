@@ -23,13 +23,15 @@ function BotaoConfirmar() {
   return <button type="submit" disabled={pending} className="mt-5 w-full rounded-xl bg-primary-700 px-5 py-3 font-semibold text-white transition hover:bg-primary-900 disabled:cursor-wait disabled:opacity-60">{pending ? "Enviando..." : "Enviar solicitação"}</button>;
 }
 
+const SEGUNDOS_POR_UNIDADE: Record<UnidadeDuracao, number> = {
+  minutos: 60,
+  horas: 3_600,
+  dias: 86_400,
+  semanas: 604_800,
+};
+
 function adicionarDuracao(inicio: Date, quantidade: number, unidade: UnidadeDuracao): Date {
-  const fim = new Date(inicio);
-  if (unidade === "minutos") fim.setMinutes(fim.getMinutes() + quantidade);
-  if (unidade === "horas") fim.setHours(fim.getHours() + quantidade);
-  if (unidade === "dias") fim.setDate(fim.getDate() + quantidade);
-  if (unidade === "semanas") fim.setDate(fim.getDate() + quantidade * 7);
-  return fim;
+  return new Date(inicio.getTime() + quantidade * SEGUNDOS_POR_UNIDADE[unidade] * 1_000);
 }
 
 function formatarDataHora(data: Date): string {
