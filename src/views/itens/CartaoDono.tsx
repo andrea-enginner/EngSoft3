@@ -17,7 +17,7 @@ export function CartaoDono({ dono }: { dono: DonoItem }) {
       <h2 id="titulo-dono" className="mb-4 text-xs font-bold uppercase tracking-wide text-muted">Sobre o dono</h2>
       <div className="flex items-center gap-3">
         {dono.avatar ? (
-          <Image src={dono.avatar} alt={`Foto de ${dono.nome}`} width={48} height={48} className="h-12 w-12 rounded-full object-cover" />
+          <Image src={dono.avatar} alt={`Foto de ${dono.nome}`} width={48} height={48} className="h-12 w-12 rounded-full object-cover" unoptimized={dono.avatar.startsWith("http")} />
         ) : (
           <span aria-hidden="true" className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary-100 font-bold text-primary-700">
             {iniciais(dono.nome)}

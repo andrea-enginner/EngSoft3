@@ -11,6 +11,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import type { AnuncioResumo } from "@/models/entities/item";
 import {
   IconeCondicao,
   IconeCoracao,
@@ -20,19 +21,7 @@ import {
   IconeLocal,
 } from "@/views/comuns/Icones";
 
-export type TipoAnuncio = "doacao" | "emprestimo";
-
-export type ItemFeed = {
-  id: string;
-  tipo: TipoAnuncio;
-  titulo: string;
-  descricao: string;
-  condicao: string;
-  local: string;
-  imagem: string;
-  avaliacao?: number;
-  favorito?: boolean;
-};
+export type ItemFeed = AnuncioResumo;
 
 const ESTILO_TIPO = {
   doacao: {
@@ -56,9 +45,10 @@ export function CardItem({ item }: { item: ItemFeed }) {
       {/* Área da imagem */}
       <div className="relative h-36 overflow-hidden bg-soft">
         <Image
-          src={item.imagem}
+          src={item.imagem ?? "/file.svg"}
           alt={item.titulo}
           fill
+          unoptimized={item.imagem?.startsWith("http")}
           className="object-cover"
         />
         <span
@@ -68,16 +58,10 @@ export function CardItem({ item }: { item: ItemFeed }) {
           {tipo.rotulo}
         </span>
 
-        <span
-          className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full shadow-sm ${
-            item.favorito
-              ? "bg-red-500 text-white"
-              : "bg-white text-muted"
-          }`}
-        >
+        <span className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-muted shadow-sm">
           <IconeCoracao
             className="h-4 w-4"
-            preenchido={item.favorito}
+            preenchido={false}
           />
         </span>
       </div>
@@ -91,6 +75,8 @@ export function CardItem({ item }: { item: ItemFeed }) {
           {item.descricao}
         </p>
 
+        {item.valorCentavos ? <p className="mt-3 font-semibold text-primary-700">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.valorCentavos / 100)}</p> : null}
+
         <div className="mt-4 flex items-center gap-2 text-[12px] text-muted">
           <IconeCondicao className="h-4 w-4" />
           <span>
@@ -101,7 +87,7 @@ export function CardItem({ item }: { item: ItemFeed }) {
         <div className="mt-auto flex items-center justify-between border-t border-border pt-3 text-[12px]">
           <span className="flex items-center gap-1.5 text-primary-700">
             <IconeLocal className="h-4 w-4" />
-            {item.local}
+            {item.localizacao}
           </span>
 
           {item.avaliacao ? (

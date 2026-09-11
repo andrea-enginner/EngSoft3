@@ -25,6 +25,32 @@ function cabecalhos(credenciais: Credenciais, token: string | null) {
   };
 }
 
+export function urlPublicaStorage(bucket: string, caminho: string): string | null {
+  const credenciais = credenciaisSupabase();
+  if (!credenciais) return null;
+  return `${credenciais.url}/storage/v1/object/public/${bucket}/${caminho}`;
+}
+
+export async function executarRpc<T>(
+  funcao: string,
+  parametros: Record<string, unknown>,
+  token: string | null,
+): Promise<T[] | null> {
+  const credenciais = credenciaisSupabase();
+  if (!credenciais) return null;
+
+  const resposta = await fetch(`${credenciais.url}/rest/v1/rpc/${funcao}`, {
+    method: "POST",
+    headers: cabecalhos(credenciais, token),
+    body: JSON.stringify(parametros),
+    cache: "no-store",
+  });
+  if (!resposta.ok) {
+    throw new Error(`Supabase respondeu com status ${resposta.status}.`);
+  }
+  return (await resposta.json()) as T[];
+}
+
 /** Retorna `null` quando o Supabase não está configurado no ambiente. */
 export async function consultarSupabase<T>(
   consulta: string,

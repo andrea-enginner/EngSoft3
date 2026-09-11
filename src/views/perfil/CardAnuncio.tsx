@@ -57,6 +57,7 @@ export function CardAnuncio({ anuncio }: { anuncio: Anuncio }) {
         <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-muted">
           {anuncio.descricao}
         </p>
+        {anuncio.valorCentavos ? <p className="mt-2 text-sm font-semibold text-primary-700">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(anuncio.valorCentavos / 100)}</p> : null}
 
         <div className="mt-auto flex items-center justify-between border-t border-border pt-3 text-[12px] text-muted">
           <span>{formatarTempoRelativo(anuncio.publicadoEm)}</span>

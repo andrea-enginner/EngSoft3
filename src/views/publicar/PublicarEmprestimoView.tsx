@@ -1,13 +1,18 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChangeEvent,
   FormEvent,
+  startTransition,
+  useActionState,
   useEffect,
   useRef,
   useState,
 } from "react";
+import { publicarEmprestimoAction } from "@/controllers/publicar-emprestimo.actions";
 
 const MAX_FOTOS = 4;
 const MAX_TAMANHO_FOTO = 5 * 1024 * 1024;
@@ -19,9 +24,7 @@ type FotoSelecionada = {
   url: string;
 };
 
-type ErrosFormulario = Partial<
-  Record<"fotos" | "titulo" | "categoria" | "condicao" | "descricao", string>
->;
+type ErrosFormulario = Partial<Record<"fotos" | "titulo" | "categoria" | "condicao" | "valor" | "descricao", string>>;
 
 function IconeCamera() {
   return (
@@ -51,10 +54,13 @@ function IconeUso() {
 }
 
 export function PublicarEmprestimoView() {
+  const router = useRouter();
+  const [resultado, executarPublicacao, enviando] = useActionState(publicarEmprestimoAction, { erro: "" });
   const [fotos, setFotos] = useState<FotoSelecionada[]>([]);
   const [titulo, setTitulo] = useState("");
   const [categoria, setCategoria] = useState("");
   const [condicao, setCondicao] = useState("");
+  const [valor, setValor] = useState("");
   const [descricao, setDescricao] = useState("");
   const [erros, setErros] = useState<ErrosFormulario>({});
   const [status, setStatus] = useState("");
@@ -63,6 +69,7 @@ export function PublicarEmprestimoView() {
   const tituloRef = useRef<HTMLInputElement>(null);
   const categoriaRef = useRef<HTMLSelectElement>(null);
   const primeiraCondicaoRef = useRef<HTMLInputElement>(null);
+  const valorRef = useRef<HTMLInputElement>(null);
   const descricaoRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -72,6 +79,12 @@ export function PublicarEmprestimoView() {
   useEffect(() => {
     return () => fotosRef.current.forEach((foto) => URL.revokeObjectURL(foto.url));
   }, []);
+
+  useEffect(() => {
+    if (!resultado.itemId) return;
+    fotosRef.current.forEach((foto) => URL.revokeObjectURL(foto.url));
+    router.push(`/itens/${resultado.itemId}`);
+  }, [resultado.itemId, router]);
 
   function limparErro(campo: keyof ErrosFormulario) {
     setErros((atuais) => ({ ...atuais, [campo]: undefined }));
@@ -126,6 +139,7 @@ export function PublicarEmprestimoView() {
       titulo: titulo.trim() ? undefined : "Informe o título do item.",
       categoria: categoria ? undefined : "Selecione uma categoria.",
       condicao: condicao ? undefined : "Selecione a condição do item.",
+      valor: Number(valor) > 0 ? undefined : "Informe um valor maior que zero.",
       descricao: descricao.trim() ? undefined : "Descreva o item e as condições do empréstimo.",
     };
   }
@@ -142,6 +156,7 @@ export function PublicarEmprestimoView() {
         titulo: tituloRef.current,
         categoria: categoriaRef.current,
         condicao: primeiraCondicaoRef.current,
+        valor: valorRef.current,
         descricao: descricaoRef.current,
       };
       focos[primeiroErro]?.focus();
@@ -149,24 +164,22 @@ export function PublicarEmprestimoView() {
       return;
     }
 
-    const emprestimo = {
-      tipo: "emprestimo" as const,
-      titulo: titulo.trim(),
-      categoria,
-      condicao,
-      descricao: descricao.trim(),
-      fotos: fotos.map((foto) => foto.arquivo),
-    };
-
-    void emprestimo;
-    setStatus("Empréstimo pronto. A publicação depende da integração com autenticação, Supabase e Storage.");
+    const dados = new FormData();
+    dados.set("titulo", titulo.trim());
+    dados.set("categoria", categoria);
+    dados.set("condicao", condicao);
+    dados.set("descricao", descricao.trim());
+    dados.set("valorCentavos", String(Math.round(Number(valor) * 100)));
+    fotos.forEach((foto) => dados.append("fotos", foto.arquivo));
+    setStatus("");
+    startTransition(() => executarPublicacao(dados));
   }
 
   const campoBase = "w-full rounded-xl border bg-surface px-4 py-3 text-base text-foreground outline-none placeholder:text-muted/80 focus:border-primary-500 focus:ring-2 focus:ring-primary-100";
 
   return (
     <main className="min-h-full bg-background px-4 py-8 sm:px-6 sm:py-12">
-      <section className="mx-auto max-w-3xl rounded-2xl bg-surface px-5 py-8 shadow-[0_12px_35px_rgba(76,29,149,0.06)] sm:px-8 lg:px-10">
+      <section className="mx-auto max-w-3xl rounded-2xl border border-primary-100 bg-surface px-5 py-8 shadow-[0_16px_45px_rgba(76,29,149,0.08)] sm:px-8 lg:px-10">
         <h1 className="text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">O que você quer emprestar?</h1>
 
         <form className="mt-9 space-y-10" noValidate onSubmit={enviar}>
@@ -215,7 +228,17 @@ export function PublicarEmprestimoView() {
                 {erros.categoria && <p id="erro-categoria" className="mt-2 text-sm font-medium text-red-700">{erros.categoria}</p>}
               </div>
 
-              <fieldset aria-invalid={Boolean(erros.condicao)} aria-describedby={erros.condicao ? "erro-condicao" : undefined}>
+              <div>
+                <label htmlFor="valor" className="mb-2 block text-sm font-semibold">Valor total do empréstimo</label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">R$</span>
+                  <input ref={valorRef} id="valor" name="valor" type="number" inputMode="decimal" min="0.01" step="0.01" value={valor} onChange={(event) => { setValor(event.target.value); limparErro("valor"); }} aria-invalid={Boolean(erros.valor)} aria-describedby={erros.valor ? "erro-valor" : "ajuda-valor"} className={`${campoBase} pl-12 ${erros.valor ? "border-red-600" : "border-primary-300"}`} placeholder="0,00" />
+                </div>
+                <p id="ajuda-valor" className="mt-2 text-xs text-muted">Valor total combinado para este empréstimo.</p>
+                {erros.valor && <p id="erro-valor" className="mt-2 text-sm font-medium text-red-700">{erros.valor}</p>}
+              </div>
+
+              <fieldset className="sm:col-span-2" aria-invalid={Boolean(erros.condicao)} aria-describedby={erros.condicao ? "erro-condicao" : undefined}>
                 <legend className="mb-2 text-sm font-semibold">Condição</legend>
                 <div className="grid grid-cols-2 gap-3">
                   <label className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 text-center text-sm transition focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2 ${condicao === "novo_quase_novo" ? "border-primary-700 bg-primary-50 text-primary-700 ring-1 ring-primary-700" : "border-primary-300 bg-surface text-muted hover:border-primary-500"}`}>
@@ -240,9 +263,10 @@ export function PublicarEmprestimoView() {
           </fieldset>
 
           <div className="border-t border-border pt-6">
-            <button type="submit" className="w-full rounded-xl bg-primary-700 px-5 py-4 font-semibold text-white shadow-sm hover:bg-primary-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">Publicar empréstimo</button>
+            <button type="submit" disabled={enviando} className="w-full rounded-xl bg-primary-700 px-5 py-4 font-semibold text-white shadow-sm hover:bg-primary-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60">{enviando ? "Publicando…" : "Publicar empréstimo"}</button>
             <p className="mt-4 text-center text-xs text-muted">Ao publicar, você concorda com nossos <span className="font-medium">Termos de Uso</span>.</p>
-            <p className={`mt-4 text-center text-sm font-medium ${status.startsWith("Empréstimo pronto") ? "text-primary-700" : "text-red-700"}`} role="status" aria-live="polite">{status}</p>
+            <p className="mt-4 text-center text-sm font-medium text-red-700" role="status" aria-live="polite">{status || resultado.erro}</p>
+            {resultado.erro.startsWith("Entre na sua conta") ? <p className="mt-2 text-center text-sm"><Link href="/login?retorno=/publicar" className="font-semibold text-primary-700 underline">Ir para o login</Link></p> : null}
           </div>
         </form>
       </section>
