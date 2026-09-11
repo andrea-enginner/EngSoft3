@@ -14,6 +14,7 @@ const ANUNCIOS_DEMONSTRACAO: Anuncio[] = [
     tipo: "doacao",
     titulo: "Violão Acústico Giannini",
     descricao: "Doando pra quem estiver precisando. Precisa afinar e trocar as cordas.",
+    categoria: null,
     condicao: "Usado com marcas",
     localizacao: "Petrolina, PE",
     imagem: "/itens/violao_guitarra.jpg",
@@ -28,6 +29,7 @@ const ANUNCIOS_DEMONSTRACAO: Anuncio[] = [
     tipo: "emprestimo",
     titulo: "Livro: O Design do Dia a Dia",
     descricao: "Empresto por até 15 dias. Ótima leitura para quem gosta de usabilidade.",
+    categoria: "Livros",
     condicao: "Bem Cuidado",
     localizacao: "Petrolina, PE",
     imagem: "/itens/livro_legal.jpg",
@@ -42,6 +44,7 @@ const ANUNCIOS_DEMONSTRACAO: Anuncio[] = [
     tipo: "emprestimo",
     titulo: "Barraca de Camping 4 Pessoas",
     descricao: "Disponível aos finais de semana. Ideal para trilhas e acampamentos.",
+    categoria: "Esporte",
     condicao: "Excelente",
     localizacao: "Petrolina, PE",
     imagem: "/itens/acampar_lindo.jpg",
@@ -58,6 +61,7 @@ type RegistroAnuncio = {
   tipo?: string | null;
   titulo?: string | null;
   descricao?: string | null;
+  categoria?: string | null;
   imagem_url?: string | null;
   ativo?: boolean | null;
   criado_em?: string | null;
@@ -81,6 +85,7 @@ function normalizar(registro: RegistroAnuncio): Anuncio {
     tipo,
     titulo: registro.titulo?.trim() || "Anúncio sem título",
     descricao: registro.descricao?.trim() || "",
+    categoria: registro.categoria?.trim() || null,
     condicao: registro.condicao === "novo_quase_novo" ? "Novo/Quase novo" : registro.condicao === "marcas_de_uso" ? "Com marcas de uso" : "Não informada",
     localizacao: "Local não informado",
     imagem,

@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Anuncio } from "@/models/entities/anuncio";
 import { formatarTempoRelativo } from "@/lib/datas";
+import { formatarTarifa } from "@/lib/formatar-emprestimo";
 import { IconeImagem, IconeLapis, IconePublicar } from "@/views/comuns/Icones";
 
 const ESTILO_TIPO = {
@@ -57,7 +58,7 @@ export function CardAnuncio({ anuncio }: { anuncio: Anuncio }) {
         <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-muted">
           {anuncio.descricao}
         </p>
-        {anuncio.valorUnitarioCentavos ? <p className="mt-2 text-sm font-semibold text-primary-700">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(anuncio.valorUnitarioCentavos / 100)}</p> : null}
+        {anuncio.valorUnitarioCentavos && anuncio.duracaoUnidade ? <p className="mt-2 text-sm font-semibold text-primary-700">{formatarTarifa(anuncio.valorUnitarioCentavos, anuncio.duracaoUnidade)}</p> : null}
 
         <div className="mt-auto flex items-center justify-between border-t border-border pt-3 text-[12px] text-muted">
           <span>{formatarTempoRelativo(anuncio.publicadoEm)}</span>

@@ -1,52 +1,57 @@
-import type { Emprestimo, StatusEmprestimo } from "@/models/entities/emprestimo";
+import { credenciaisSupabase, executarRpc, urlPublicaStorage } from "@/lib/supabase/rest";
+import type { Emprestimo, PapelEmprestimo, StatusEmprestimo } from "@/models/entities/emprestimo";
+import type { UnidadeDuracao } from "@/models/entities/item";
+import type { SessaoUsuario } from "@/models/entities/usuario";
 
-const FURADEIRA: Emprestimo = {
-  id: "furadeira-impacto",
-  nome: "Furadeira de Impacto",
-  pessoa: "Ana L.",
-  data: "Até 05 Nov 2026",
-  status: "devolucao",
-  emoji: "🛠️",
-  cor: "from-amber-100 to-orange-200",
+const DEMONSTRACAO: Emprestimo[] = [{
+  id: "demo-emprestimo", anuncioId: "2", papel: "interessado", nome: "Livro: O Design do Dia a Dia",
+  pessoa: "Lucas Martins", inicioEm: new Date(Date.now() + 86_400_000).toISOString(),
+  fimEm: new Date(Date.now() + 16 * 86_400_000).toISOString(), criadoEm: new Date().toISOString(), status: "aguardando",
+  valorUnitarioCentavos: 2500, valorTotalCentavos: 37500, duracaoQuantidade: 15, duracaoUnidade: "dias",
+  imagem: "/itens/livro_legal.jpg",
+}];
+
+type RegistroEmprestimo = {
+  id: string; anuncio_id: string; papel: string; titulo: string; pessoa: string;
+  inicio_em: string; fim_em: string; criado_em: string; status: string;
+  valor_unitario_centavos: number; valor_total_centavos: number; duracao_quantidade: number;
+  duracao_unidade: string; imagem: string | null;
 };
 
-type RegistroSupabase = {
-  id: string | number;
-  nome?: string;
-  titulo?: string;
-  pessoa?: string;
-  locatario_nome?: string;
-  data?: string;
-  data_devolucao?: string;
-  status?: string;
-  emoji?: string;
-  cor?: string;
-};
+const STATUS: StatusEmprestimo[] = ["andamento", "devolucao", "concluido", "aguardando", "negociacao", "recusado"];
+const UNIDADES: UnidadeDuracao[] = ["minutos", "horas", "dias", "semanas"];
 
-function normalizar(registro: RegistroSupabase): Emprestimo {
-  const statusValidos: StatusEmprestimo[] = ["andamento", "devolucao", "concluido", "aguardando", "negociacao", "recusado"];
-  const status = statusValidos.includes(registro.status as StatusEmprestimo) ? registro.status as StatusEmprestimo : "andamento";
+function normalizar(registro: RegistroEmprestimo): Emprestimo {
+  const imagem = registro.imagem?.trim();
   return {
-    id: String(registro.id),
-    nome: registro.nome ?? registro.titulo ?? "Item sem nome",
-    pessoa: registro.pessoa ?? registro.locatario_nome ?? "Não informado",
-    data: registro.data ?? (registro.data_devolucao ? `Até ${registro.data_devolucao}` : "Data não informada"),
-    status,
-    emoji: registro.emoji ?? "🛠️",
-    cor: registro.cor ?? "from-amber-100 to-orange-200",
+    id: registro.id,
+    anuncioId: registro.anuncio_id,
+    papel: (registro.papel === "dono" ? "dono" : "interessado") as PapelEmprestimo,
+    nome: registro.titulo,
+    pessoa: registro.pessoa,
+    inicioEm: registro.inicio_em,
+    fimEm: registro.fim_em,
+    criadoEm: registro.criado_em,
+    status: STATUS.includes(registro.status as StatusEmprestimo) ? registro.status as StatusEmprestimo : "aguardando",
+    valorUnitarioCentavos: registro.valor_unitario_centavos,
+    valorTotalCentavos: registro.valor_total_centavos,
+    duracaoQuantidade: registro.duracao_quantidade,
+    duracaoUnidade: UNIDADES.includes(registro.duracao_unidade as UnidadeDuracao) ? registro.duracao_unidade as UnidadeDuracao : "dias",
+    imagem: imagem ? (imagem.startsWith("http") || imagem.startsWith("/") ? imagem : urlPublicaStorage("anuncios", imagem)) : null,
   };
 }
 
-export async function buscarMeusEmprestimos(): Promise<{ dados: Emprestimo[]; fonte: "supabase" | "demonstracao" }> {
-  const url = process.env.SUPABASE_URL;
-  const chave = process.env.SUPABASE_ANON_KEY;
-  if (!url || !chave) return { dados: [FURADEIRA], fonte: "demonstracao" };
+export type ResultadoEmprestimos = { dados: Emprestimo[]; fonte: "supabase" | "demonstracao"; requerLogin: boolean };
 
-  const resposta = await fetch(`${url}/rest/v1/emprestimos?select=*&order=id.desc`, {
-    headers: { apikey: chave, Authorization: `Bearer ${chave}` },
-    cache: "no-store",
-  });
-  if (!resposta.ok) throw new Error(`Supabase respondeu com status ${resposta.status}.`);
-  const registros = (await resposta.json()) as RegistroSupabase[];
-  return { dados: registros.map(normalizar), fonte: "supabase" };
+export async function buscarMeusEmprestimos(sessao: SessaoUsuario | null): Promise<ResultadoEmprestimos> {
+  if (!credenciaisSupabase()) return { dados: DEMONSTRACAO, fonte: "demonstracao", requerLogin: false };
+  if (!sessao) return { dados: [], fonte: "supabase", requerLogin: true };
+
+  const registros = await executarRpc<RegistroEmprestimo>("listar_minhas_solicitacoes_emprestimo", {}, sessao.token);
+  return { dados: (registros ?? []).map(normalizar), fonte: "supabase", requerLogin: false };
+}
+
+export async function criarSolicitacaoEmprestimo(sessao: SessaoUsuario, anuncioId: string, inicioEm: string): Promise<string> {
+  const dados = await executarRpc<string>("solicitar_reserva", { p_anuncio_id: anuncioId, p_inicio_em: inicioEm }, sessao.token);
+  return String(dados ?? "");
 }

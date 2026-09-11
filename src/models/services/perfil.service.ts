@@ -24,9 +24,9 @@ export class DadosInvalidosError extends Error {}
  * O total de empréstimos vem de outra funcionalidade. Se aquela tabela ainda
  * não existir, o perfil continua abrindo com zero em vez de quebrar a página.
  */
-async function contarEmprestimos(): Promise<number> {
+async function contarEmprestimos(sessao: SessaoUsuario | null): Promise<number> {
   try {
-    const { dados } = await listarMeusEmprestimos();
+    const { dados } = await listarMeusEmprestimos(sessao);
     return dados.length;
   } catch {
     return 0;
@@ -46,7 +46,7 @@ export async function carregarPerfil(sessao: SessaoUsuario | null): Promise<Perf
     buscarUsuario(sessao),
     buscarAnunciosDoUsuario(sessao),
     buscarAvaliacoesDoUsuario(sessao),
-    contarEmprestimos(),
+    contarEmprestimos(sessao),
   ]);
 
   if (!usuario) {
