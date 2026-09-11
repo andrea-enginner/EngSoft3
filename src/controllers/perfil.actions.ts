@@ -10,7 +10,11 @@
 
 import { revalidatePath } from "next/cache";
 import { sessaoAtual } from "@/lib/supabase/sessao";
-import { DadosInvalidosError, atualizarDadosBasicos } from "@/models/services/perfil.service";
+import {
+  DadosInvalidosError,
+  atualizarDadosBasicos,
+  atualizarLocalizacao,
+} from "@/models/services/perfil.service";
 
 export type EstadoFormulario = {
   status: "sucesso" | "erro";
@@ -32,5 +36,22 @@ export async function salvarDadosBasicosAction(formulario: FormData): Promise<Es
       return { status: "erro", mensagem: erro.message };
     }
     return { status: "erro", mensagem: "Não foi possível salvar o perfil. Tente novamente." };
+  }
+}
+
+export async function salvarLocalizacaoAction(formulario: FormData): Promise<EstadoFormulario> {
+  try {
+    await atualizarLocalizacao(await sessaoAtual(), {
+      cidade: String(formulario.get("cidade") ?? ""),
+      estado: String(formulario.get("estado") ?? ""),
+    });
+
+    revalidatePath("/perfil");
+    return { status: "sucesso", mensagem: "Localização atualizada." };
+  } catch (erro) {
+    if (erro instanceof DadosInvalidosError) {
+      return { status: "erro", mensagem: erro.message };
+    }
+    return { status: "erro", mensagem: "Não foi possível salvar a localização. Tente novamente." };
   }
 }

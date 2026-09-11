@@ -3,7 +3,9 @@
  *
  * Sem foto cadastrada, cai nas iniciais do nome sobre o gradiente roxo da
  * identidade do Ciclo. URLs externas passam sem otimização porque o projeto
- * ainda não declara `images.remotePatterns` no `next.config.ts`.
+ * ainda não declara `images.remotePatterns` no `next.config.ts`. Fotos
+ * enviadas como arquivo chegam como `data:` URI e também precisam pular a
+ * otimização — o otimizador de imagem do Next não sabe buscar uma Data URL.
  */
 
 import Image from "next/image";
@@ -35,7 +37,7 @@ export function Avatar({ nome, avatar, className = "", sizes = "112px" }: PropsA
         fill
         sizes={sizes}
         className="object-cover"
-        unoptimized={avatar.startsWith("http")}
+        unoptimized={avatar.startsWith("http") || avatar.startsWith("data:")}
       />
     </span>
   );

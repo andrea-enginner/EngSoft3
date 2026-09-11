@@ -7,13 +7,24 @@
  * real acontece no servidor, dentro do service. Aqui só há estado de tela.
  */
 
-import { useEffect, useId, useState, useTransition } from "react";
+import { useEffect, useId, useState, useTransition, type ChangeEvent } from "react";
 import type { Usuario } from "@/models/entities/usuario";
 import { salvarDadosBasicosAction } from "@/controllers/perfil.actions";
 import { Avatar } from "@/views/perfil/Avatar";
 
 const CAMPO =
   "h-[45px] w-full rounded-[11px] border border-border bg-white px-3.5 text-[14px] text-foreground outline-none placeholder:text-muted focus:border-primary-500 focus:ring-1 focus:ring-primary-300";
+
+const TAMANHO_MAXIMO_FOTO = 1024 * 1024; // 1MB — base64 infla ~33%, ficando dentro do limite de corpo das Server Actions.
+
+function lerArquivoComoBase64(arquivo: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const leitor = new FileReader();
+    leitor.onload = () => resolve(String(leitor.result));
+    leitor.onerror = () => reject(leitor.error);
+    leitor.readAsDataURL(arquivo);
+  });
+}
 
 export function EditarPerfilModal({ usuario }: { usuario: Usuario }) {
   const [aberto, setAberto] = useState(false);
@@ -23,6 +34,7 @@ export function EditarPerfilModal({ usuario }: { usuario: Usuario }) {
   const [nome, setNome] = useState(usuario.nome);
   const [email, setEmail] = useState(usuario.email);
   const [avatar, setAvatar] = useState(usuario.avatar ?? "");
+  const [erroFoto, setErroFoto] = useState("");
   const [erro, setErro] = useState("");
   const [enviando, iniciarEnvio] = useTransition();
   const titulo = useId();
@@ -40,8 +52,23 @@ export function EditarPerfilModal({ usuario }: { usuario: Usuario }) {
     setNome(usuario.nome);
     setEmail(usuario.email);
     setAvatar(usuario.avatar ?? "");
+    setErroFoto("");
     setErro("");
     setAberto(true);
+  }
+
+  async function selecionarFoto(evento: ChangeEvent<HTMLInputElement>) {
+    const arquivo = evento.target.files?.[0];
+    evento.target.value = "";
+    if (!arquivo) return;
+
+    if (arquivo.size > TAMANHO_MAXIMO_FOTO) {
+      setErroFoto("A foto deve ter no máximo 1MB.");
+      return;
+    }
+
+    setErroFoto("");
+    setAvatar(await lerArquivoComoBase64(arquivo));
   }
 
   function enviar(formulario: FormData) {
@@ -97,18 +124,34 @@ export function EditarPerfilModal({ usuario }: { usuario: Usuario }) {
                   sizes="64px"
                 />
                 <div className="flex-1">
-                  <label htmlFor="avatar" className="text-[13px] font-medium text-foreground">
-                    Foto (endereço da imagem)
-                  </label>
-                  <input
-                    id="avatar"
-                    name="avatar"
-                    value={avatar}
-                    onChange={(evento) => setAvatar(evento.target.value)}
-                    placeholder="https://... ou /itens/minha-foto.jpg"
-                    className={`${CAMPO} mt-1.5`}
-                  />
+                  <span className="text-[13px] font-medium text-foreground">Foto</span>
+                  <div className="mt-1.5 flex items-center gap-3">
+                    <label
+                      htmlFor="foto"
+                      className="cursor-pointer rounded-[11px] border border-border bg-white px-3.5 py-2.5 text-[13px] font-medium text-primary-700 hover:bg-primary-50"
+                    >
+                      Escolher arquivo
+                      <input
+                        id="foto"
+                        type="file"
+                        accept="image/*"
+                        onChange={selecionarFoto}
+                        className="sr-only"
+                      />
+                    </label>
+                    {avatar ? (
+                      <button
+                        type="button"
+                        onClick={() => setAvatar("")}
+                        className="text-[13px] font-medium text-muted hover:text-red-600"
+                      >
+                        Remover foto
+                      </button>
+                    ) : null}
+                  </div>
+                  {erroFoto ? <p className="mt-1.5 text-[12px] text-red-600">{erroFoto}</p> : null}
                 </div>
+                <input type="hidden" name="avatar" value={avatar} />
               </div>
 
               <div>

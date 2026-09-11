@@ -10,11 +10,12 @@ import { IconeEmprestimo, IconeEstrela } from "@/views/comuns/Icones";
 import { AbasPerfil } from "@/views/perfil/AbasPerfil";
 import { CardAnuncio, CardNovoAnuncio } from "@/views/perfil/CardAnuncio";
 import { CardAvaliacao } from "@/views/perfil/CardAvaliacao";
+import { CardHistorico } from "@/views/perfil/CardHistorico";
 import { CartaoPerfil } from "@/views/perfil/CartaoPerfil";
 import { EstadoVazio } from "@/views/perfil/EstadoVazio";
 
 export function PerfilView({ perfil }: { perfil: Perfil }) {
-  const { usuario, estatisticas, anuncios, avaliacoes } = perfil;
+  const { usuario, estatisticas, anuncios, avaliacoes, historico } = perfil;
 
   const painelAnuncios = (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -25,13 +26,20 @@ export function PerfilView({ perfil }: { perfil: Perfil }) {
     </div>
   );
 
-  const painelHistorico = (
-    <EstadoVazio
-      icone={<IconeEmprestimo className="h-6 w-6" />}
-      titulo="Nenhum item no histórico"
-      descricao="Doações e empréstimos concluídos aparecerão aqui, com a data e a pessoa envolvida em cada troca."
-    />
-  );
+  const painelHistorico =
+    historico.length > 0 ? (
+      <div className="flex flex-col gap-3">
+        {historico.map((item) => (
+          <CardHistorico key={item.id} emprestimo={item} />
+        ))}
+      </div>
+    ) : (
+      <EstadoVazio
+        icone={<IconeEmprestimo className="h-6 w-6" />}
+        titulo="Nenhum item no histórico"
+        descricao="Doações e empréstimos concluídos aparecerão aqui, com a data e a pessoa envolvida em cada troca."
+      />
+    );
 
   const painelAvaliacoes =
     avaliacoes.length > 0 ? (
