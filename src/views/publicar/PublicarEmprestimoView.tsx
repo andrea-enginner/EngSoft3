@@ -24,7 +24,7 @@ type FotoSelecionada = {
   url: string;
 };
 
-type ErrosFormulario = Partial<Record<"fotos" | "titulo" | "categoria" | "condicao" | "valor" | "descricao", string>>;
+type ErrosFormulario = Partial<Record<"fotos" | "titulo" | "categoria" | "condicao" | "duracaoQuantidade" | "duracaoUnidade" | "valor" | "descricao", string>>;
 
 function IconeCamera() {
   return (
@@ -61,6 +61,8 @@ export function PublicarEmprestimoView() {
   const [categoria, setCategoria] = useState("");
   const [condicao, setCondicao] = useState("");
   const [valor, setValor] = useState("");
+  const [duracaoQuantidade, setDuracaoQuantidade] = useState("");
+  const [duracaoUnidade, setDuracaoUnidade] = useState("");
   const [descricao, setDescricao] = useState("");
   const [erros, setErros] = useState<ErrosFormulario>({});
   const [status, setStatus] = useState("");
@@ -70,6 +72,8 @@ export function PublicarEmprestimoView() {
   const categoriaRef = useRef<HTMLSelectElement>(null);
   const primeiraCondicaoRef = useRef<HTMLInputElement>(null);
   const valorRef = useRef<HTMLInputElement>(null);
+  const duracaoQuantidadeRef = useRef<HTMLInputElement>(null);
+  const duracaoUnidadeRef = useRef<HTMLSelectElement>(null);
   const descricaoRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -140,6 +144,8 @@ export function PublicarEmprestimoView() {
       categoria: categoria ? undefined : "Selecione uma categoria.",
       condicao: condicao ? undefined : "Selecione a condição do item.",
       valor: Number(valor) > 0 ? undefined : "Informe um valor maior que zero.",
+      duracaoQuantidade: Number.isInteger(Number(duracaoQuantidade)) && Number(duracaoQuantidade) > 0 && Number(duracaoQuantidade) <= 2_147_483_647 ? undefined : "Informe uma quantidade inteira maior que zero.",
+      duracaoUnidade: duracaoUnidade ? undefined : "Selecione uma unidade de duração.",
       descricao: descricao.trim() ? undefined : "Descreva o item e as condições do empréstimo.",
     };
   }
@@ -157,6 +163,8 @@ export function PublicarEmprestimoView() {
         categoria: categoriaRef.current,
         condicao: primeiraCondicaoRef.current,
         valor: valorRef.current,
+        duracaoQuantidade: duracaoQuantidadeRef.current,
+        duracaoUnidade: duracaoUnidadeRef.current,
         descricao: descricaoRef.current,
       };
       focos[primeiroErro]?.focus();
@@ -170,6 +178,8 @@ export function PublicarEmprestimoView() {
     dados.set("condicao", condicao);
     dados.set("descricao", descricao.trim());
     dados.set("valorCentavos", String(Math.round(Number(valor) * 100)));
+    dados.set("duracaoQuantidade", duracaoQuantidade);
+    dados.set("duracaoUnidade", duracaoUnidade);
     fotos.forEach((foto) => dados.append("fotos", foto.arquivo));
     setStatus("");
     startTransition(() => executarPublicacao(dados));
@@ -237,6 +247,34 @@ export function PublicarEmprestimoView() {
                 <p id="ajuda-valor" className="mt-2 text-xs text-muted">Valor total combinado para este empréstimo.</p>
                 {erros.valor && <p id="erro-valor" className="mt-2 text-sm font-medium text-red-700">{erros.valor}</p>}
               </div>
+
+              <fieldset className="rounded-2xl border border-primary-100 bg-primary-50/40 p-4 sm:col-span-2" aria-describedby="ajuda-duracao">
+                <legend className="px-1 text-sm font-semibold">Duração do empréstimo</legend>
+                <p id="ajuda-duracao" className="mb-4 mt-1 text-xs text-muted">Defina por quanto tempo o item poderá ficar emprestado.</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="duracao-quantidade" className="mb-2 block text-sm font-medium">Quantidade</label>
+                    <input ref={duracaoQuantidadeRef} id="duracao-quantidade" name="duracaoQuantidade" type="number" inputMode="numeric" min="1" max="2147483647" step="1" value={duracaoQuantidade} onChange={(event) => { setDuracaoQuantidade(event.target.value); limparErro("duracaoQuantidade"); }} aria-invalid={Boolean(erros.duracaoQuantidade)} aria-describedby={erros.duracaoQuantidade ? "erro-duracao-quantidade ajuda-duracao" : "ajuda-duracao"} className={`${campoBase} ${erros.duracaoQuantidade ? "border-red-600" : "border-primary-300"}`} placeholder="Ex.: 2" />
+                    {erros.duracaoQuantidade && <p id="erro-duracao-quantidade" className="mt-2 text-sm font-medium text-red-700">{erros.duracaoQuantidade}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="duracao-unidade" className="mb-2 block text-sm font-medium">Unidade</label>
+                    <select ref={duracaoUnidadeRef} id="duracao-unidade" name="duracaoUnidade" value={duracaoUnidade} onChange={(event) => { setDuracaoUnidade(event.target.value); limparErro("duracaoUnidade"); }} aria-invalid={Boolean(erros.duracaoUnidade)} aria-describedby={erros.duracaoUnidade ? "erro-duracao-unidade ajuda-duracao" : "ajuda-duracao"} className={`${campoBase} ${erros.duracaoUnidade ? "border-red-600" : "border-primary-300"}`}>
+                      <option value="">Selecione...</option>
+                      <option value="minutos">Minuto(s)</option>
+                      <option value="horas">Hora(s)</option>
+                      <option value="dias">Dia(s)</option>
+                      <option value="semanas">Semana(s)</option>
+                    </select>
+                    {erros.duracaoUnidade && <p id="erro-duracao-unidade" className="mt-2 text-sm font-medium text-red-700">{erros.duracaoUnidade}</p>}
+                  </div>
+                </div>
+                {duracaoQuantidade && duracaoUnidade && Number(duracaoQuantidade) > 0 ? (
+                  <p className="mt-4 text-sm font-medium text-primary-700" aria-live="polite">
+                    Período: {duracaoQuantidade} {Number(duracaoQuantidade) === 1 ? { minutos: "minuto", horas: "hora", dias: "dia", semanas: "semana" }[duracaoUnidade] : duracaoUnidade}
+                  </p>
+                ) : null}
+              </fieldset>
 
               <fieldset className="sm:col-span-2" aria-invalid={Boolean(erros.condicao)} aria-describedby={erros.condicao ? "erro-condicao" : undefined}>
                 <legend className="mb-2 text-sm font-semibold">Condição</legend>

@@ -1,5 +1,6 @@
 export type TipoAnuncio = "doacao" | "emprestimo";
 export type CondicaoItem = "novo_quase_novo" | "marcas_de_uso";
+export type UnidadeDuracao = "minutos" | "horas" | "dias" | "semanas";
 
 export type AnuncioResumo = {
   id: string;
@@ -10,6 +11,8 @@ export type AnuncioResumo = {
   localizacao: string;
   imagem: string | null;
   valorCentavos: number | null;
+  duracaoQuantidade: number | null;
+  duracaoUnidade: UnidadeDuracao | null;
   publicadoEm: string;
   ativo: boolean;
   avaliacao?: number;
@@ -38,4 +41,6 @@ export type NovoEmprestimo = {
   condicao: CondicaoItem;
   descricao: string;
   valorCentavos: number;
+  duracaoQuantidade: number;
+  duracaoUnidade: UnidadeDuracao;
 };

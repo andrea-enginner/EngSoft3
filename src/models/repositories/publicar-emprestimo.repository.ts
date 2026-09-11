@@ -50,6 +50,8 @@ export async function salvarEmprestimo(
       p_condicao: emprestimo.condicao,
       p_descricao: emprestimo.descricao,
       p_valor_centavos: emprestimo.valorCentavos,
+      p_duracao_quantidade: emprestimo.duracaoQuantidade,
+      p_duracao_unidade: emprestimo.duracaoUnidade,
       p_imagens: caminhos,
     });
     if (error) throw error;

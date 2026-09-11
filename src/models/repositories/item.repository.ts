@@ -9,6 +9,8 @@ const DEMONSTRACAO: AnuncioDetalhe[] = [
 ].map(([id, tipo, titulo, descricao, condicao, localizacao, imagem, nome], indice) => ({
   id, tipo: tipo as TipoAnuncio, titulo, descricao, condicao, localizacao,
   imagem, imagens: [imagem], valorCentavos: tipo === "emprestimo" ? 2500 : null,
+  duracaoQuantidade: tipo === "emprestimo" ? 1 : null,
+  duracaoUnidade: tipo === "emprestimo" ? "semanas" : null,
   publicadoEm: new Date(Date.now() - (indice + 2) * 86_400_000).toISOString(), ativo: true,
   aceitaPropostas: true,
   dono: { id: `demo-${id}`, nome, avaliacao: 4.8, quantidadeEmprestimos: 0, confiavel: true },
@@ -16,7 +18,8 @@ const DEMONSTRACAO: AnuncioDetalhe[] = [
 
 type RegistroPublico = {
   id: string; tipo: string; titulo: string; descricao: string; condicao: string | null;
-  valor_centavos: number | null; criado_em: string; usuario_id: string; dono_nome: string;
+  valor_centavos: number | null; duracao_quantidade: number | null; duracao_unidade: string | null;
+  criado_em: string; usuario_id: string; dono_nome: string;
   dono_avatar: string | null; cidade: string | null; estado: string | null;
   avaliacao: number | string; imagens: string[] | null;
 };
@@ -35,6 +38,9 @@ function normalizar(registro: RegistroPublico): AnuncioDetalhe {
     condicao: registro.condicao === "novo_quase_novo" ? "Novo/Quase novo" : registro.condicao === "marcas_de_uso" ? "Com marcas de uso" : "Não informada",
     localizacao: [registro.cidade, registro.estado].filter(Boolean).join(", ") || "Local não informado",
     imagem: imagens[0] ?? null, imagens, valorCentavos: registro.valor_centavos,
+    duracaoQuantidade: registro.duracao_quantidade,
+    duracaoUnidade: ["minutos", "horas", "dias", "semanas"].includes(registro.duracao_unidade ?? "")
+      ? registro.duracao_unidade as AnuncioDetalhe["duracaoUnidade"] : null,
     publicadoEm: registro.criado_em, ativo: true, avaliacao, aceitaPropostas: true,
     dono: { id: registro.usuario_id, nome: registro.dono_nome, avatar: registro.dono_avatar ?? undefined, avaliacao, quantidadeEmprestimos: 0, confiavel: avaliacao >= 4.5 },
   };

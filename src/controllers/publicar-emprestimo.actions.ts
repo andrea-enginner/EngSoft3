@@ -19,6 +19,8 @@ export async function publicarEmprestimoAction(
         condicao: String(dados.get("condicao") ?? ""),
         descricao: String(dados.get("descricao") ?? ""),
         valorCentavos: Number(dados.get("valorCentavos")),
+        duracaoQuantidade: Number(dados.get("duracaoQuantidade")),
+        duracaoUnidade: String(dados.get("duracaoUnidade") ?? ""),
       },
       fotos,
     );

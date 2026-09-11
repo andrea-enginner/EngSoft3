@@ -18,6 +18,8 @@ const ANUNCIOS_DEMONSTRACAO: Anuncio[] = [
     localizacao: "Petrolina, PE",
     imagem: "/itens/violao_guitarra.jpg",
     valorCentavos: null,
+    duracaoQuantidade: null,
+    duracaoUnidade: null,
     publicadoEm: new Date(Date.now() - 2 * DIA).toISOString(),
     ativo: true,
   },
@@ -30,6 +32,8 @@ const ANUNCIOS_DEMONSTRACAO: Anuncio[] = [
     localizacao: "Petrolina, PE",
     imagem: "/itens/livro_legal.jpg",
     valorCentavos: 2500,
+    duracaoQuantidade: 15,
+    duracaoUnidade: "dias",
     publicadoEm: new Date(Date.now() - 8 * DIA).toISOString(),
     ativo: true,
   },
@@ -42,6 +46,8 @@ const ANUNCIOS_DEMONSTRACAO: Anuncio[] = [
     localizacao: "Petrolina, PE",
     imagem: "/itens/acampar_lindo.jpg",
     valorCentavos: 5000,
+    duracaoQuantidade: 1,
+    duracaoUnidade: "semanas",
     publicadoEm: new Date(Date.now() - 40 * DIA).toISOString(),
     ativo: false,
   },
@@ -57,6 +63,8 @@ type RegistroAnuncio = {
   criado_em?: string | null;
   condicao?: string | null;
   valor_centavos?: number | null;
+  duracao_quantidade?: number | null;
+  duracao_unidade?: string | null;
   anuncio_imagens?: { caminho: string; ordem: number }[] | null;
 };
 
@@ -77,6 +85,9 @@ function normalizar(registro: RegistroAnuncio): Anuncio {
     localizacao: "Local não informado",
     imagem,
     valorCentavos: registro.valor_centavos ?? null,
+    duracaoQuantidade: registro.duracao_quantidade ?? null,
+    duracaoUnidade: ["minutos", "horas", "dias", "semanas"].includes(registro.duracao_unidade ?? "")
+      ? registro.duracao_unidade as Anuncio["duracaoUnidade"] : null,
     publicadoEm: registro.criado_em ?? new Date().toISOString(),
     ativo: registro.ativo ?? true,
   };
