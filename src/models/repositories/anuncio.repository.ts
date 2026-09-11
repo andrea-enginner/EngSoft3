@@ -17,7 +17,7 @@ const ANUNCIOS_DEMONSTRACAO: Anuncio[] = [
     condicao: "Usado com marcas",
     localizacao: "Petrolina, PE",
     imagem: "/itens/violao_guitarra.jpg",
-    valorCentavos: null,
+    valorUnitarioCentavos: null,
     duracaoQuantidade: null,
     duracaoUnidade: null,
     publicadoEm: new Date(Date.now() - 2 * DIA).toISOString(),
@@ -31,7 +31,7 @@ const ANUNCIOS_DEMONSTRACAO: Anuncio[] = [
     condicao: "Bem Cuidado",
     localizacao: "Petrolina, PE",
     imagem: "/itens/livro_legal.jpg",
-    valorCentavos: 2500,
+    valorUnitarioCentavos: 2500,
     duracaoQuantidade: 15,
     duracaoUnidade: "dias",
     publicadoEm: new Date(Date.now() - 8 * DIA).toISOString(),
@@ -45,7 +45,7 @@ const ANUNCIOS_DEMONSTRACAO: Anuncio[] = [
     condicao: "Excelente",
     localizacao: "Petrolina, PE",
     imagem: "/itens/acampar_lindo.jpg",
-    valorCentavos: 5000,
+    valorUnitarioCentavos: 5000,
     duracaoQuantidade: 1,
     duracaoUnidade: "semanas",
     publicadoEm: new Date(Date.now() - 40 * DIA).toISOString(),
@@ -62,7 +62,7 @@ type RegistroAnuncio = {
   ativo?: boolean | null;
   criado_em?: string | null;
   condicao?: string | null;
-  valor_centavos?: number | null;
+  valor_unitario_centavos?: number | null;
   duracao_quantidade?: number | null;
   duracao_unidade?: string | null;
   anuncio_imagens?: { caminho: string; ordem: number }[] | null;
@@ -84,7 +84,7 @@ function normalizar(registro: RegistroAnuncio): Anuncio {
     condicao: registro.condicao === "novo_quase_novo" ? "Novo/Quase novo" : registro.condicao === "marcas_de_uso" ? "Com marcas de uso" : "Não informada",
     localizacao: "Local não informado",
     imagem,
-    valorCentavos: registro.valor_centavos ?? null,
+    valorUnitarioCentavos: registro.valor_unitario_centavos ?? null,
     duracaoQuantidade: registro.duracao_quantidade ?? null,
     duracaoUnidade: ["minutos", "horas", "dias", "semanas"].includes(registro.duracao_unidade ?? "")
       ? registro.duracao_unidade as Anuncio["duracaoUnidade"] : null,

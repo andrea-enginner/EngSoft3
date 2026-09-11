@@ -10,7 +10,7 @@ export type AnuncioResumo = {
   condicao: string;
   localizacao: string;
   imagem: string | null;
-  valorCentavos: number | null;
+  valorUnitarioCentavos: number | null;
   duracaoQuantidade: number | null;
   duracaoUnidade: UnidadeDuracao | null;
   publicadoEm: string;
@@ -40,7 +40,7 @@ export type NovoEmprestimo = {
   categoria: string;
   condicao: CondicaoItem;
   descricao: string;
-  valorCentavos: number;
+  valorUnitarioCentavos: number;
   duracaoQuantidade: number;
   duracaoUnidade: UnidadeDuracao;
 };

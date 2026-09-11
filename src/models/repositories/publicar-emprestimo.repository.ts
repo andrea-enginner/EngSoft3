@@ -49,7 +49,7 @@ export async function salvarEmprestimo(
       p_categoria: emprestimo.categoria,
       p_condicao: emprestimo.condicao,
       p_descricao: emprestimo.descricao,
-      p_valor_centavos: emprestimo.valorCentavos,
+      p_valor_unitario_centavos: emprestimo.valorUnitarioCentavos,
       p_duracao_quantidade: emprestimo.duracaoQuantidade,
       p_duracao_unidade: emprestimo.duracaoUnidade,
       p_imagens: caminhos,

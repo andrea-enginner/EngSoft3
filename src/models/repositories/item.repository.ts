@@ -8,7 +8,7 @@ const DEMONSTRACAO: AnuncioDetalhe[] = [
   ["4", "emprestimo", "Barraca de Camping 4 Pessoas", "Disponível para empréstimo aos finais de semana. Ideal para trilhas e acampamentos.", "Excelente", "Butantã, SP", "/itens/acampar_lindo.jpg", "Marina Souza"],
 ].map(([id, tipo, titulo, descricao, condicao, localizacao, imagem, nome], indice) => ({
   id, tipo: tipo as TipoAnuncio, titulo, descricao, condicao, localizacao,
-  imagem, imagens: [imagem], valorCentavos: tipo === "emprestimo" ? 2500 : null,
+  imagem, imagens: [imagem], valorUnitarioCentavos: tipo === "emprestimo" ? 2500 : null,
   duracaoQuantidade: tipo === "emprestimo" ? 1 : null,
   duracaoUnidade: tipo === "emprestimo" ? "semanas" : null,
   publicadoEm: new Date(Date.now() - (indice + 2) * 86_400_000).toISOString(), ativo: true,
@@ -18,7 +18,7 @@ const DEMONSTRACAO: AnuncioDetalhe[] = [
 
 type RegistroPublico = {
   id: string; tipo: string; titulo: string; descricao: string; condicao: string | null;
-  valor_centavos: number | null; duracao_quantidade: number | null; duracao_unidade: string | null;
+  valor_unitario_centavos: number | null; duracao_quantidade: number | null; duracao_unidade: string | null;
   criado_em: string; usuario_id: string; dono_nome: string;
   dono_avatar: string | null; cidade: string | null; estado: string | null;
   avaliacao: number | string; imagens: string[] | null;
@@ -37,7 +37,7 @@ function normalizar(registro: RegistroPublico): AnuncioDetalhe {
     titulo: registro.titulo, descricao: registro.descricao,
     condicao: registro.condicao === "novo_quase_novo" ? "Novo/Quase novo" : registro.condicao === "marcas_de_uso" ? "Com marcas de uso" : "Não informada",
     localizacao: [registro.cidade, registro.estado].filter(Boolean).join(", ") || "Local não informado",
-    imagem: imagens[0] ?? null, imagens, valorCentavos: registro.valor_centavos,
+    imagem: imagens[0] ?? null, imagens, valorUnitarioCentavos: registro.valor_unitario_centavos,
     duracaoQuantidade: registro.duracao_quantidade,
     duracaoUnidade: ["minutos", "horas", "dias", "semanas"].includes(registro.duracao_unidade ?? "")
       ? registro.duracao_unidade as AnuncioDetalhe["duracaoUnidade"] : null,

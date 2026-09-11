@@ -13,11 +13,27 @@ import {
   useState,
 } from "react";
 import { publicarEmprestimoAction } from "@/controllers/publicar-emprestimo.actions";
+import type { UnidadeDuracao } from "@/models/entities/item";
 
 const MAX_FOTOS = 4;
 const MAX_TAMANHO_FOTO = 5 * 1024 * 1024;
 const MAX_VALOR_CENTAVOS = 2_147_483_647;
 const FORMATOS_ACEITOS = ["image/jpeg", "image/png", "image/webp"];
+const SUGESTOES_UNIDADE: Record<string, UnidadeDuracao> = {
+  ferramentas: "horas",
+  livros: "semanas",
+  eletronicos: "dias",
+  esporte: "dias",
+  casa: "dias",
+  outros: "dias",
+};
+const UNIDADES_SINGULAR: Record<UnidadeDuracao, string> = {
+  minutos: "minuto",
+  horas: "hora",
+  dias: "dia",
+  semanas: "semana",
+};
+const FORMATADOR_BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 type FotoSelecionada = {
   arquivo: File;
@@ -25,7 +41,15 @@ type FotoSelecionada = {
   url: string;
 };
 
-type ErrosFormulario = Partial<Record<"fotos" | "titulo" | "categoria" | "condicao" | "duracaoQuantidade" | "duracaoUnidade" | "valor" | "descricao", string>>;
+type ErrosFormulario = Partial<Record<"fotos" | "titulo" | "categoria" | "condicao" | "duracaoQuantidade" | "duracaoUnidade" | "valorUnitario" | "descricao", string>>;
+
+function converterValorEmCentavos(valor: string): number | null {
+  if (valor.length > 11) return null;
+  const partes = /^(\d+)(?:\.(\d{1,2}))?$/.exec(valor);
+  if (!partes) return null;
+  const centavos = BigInt(partes[1]) * BigInt(100) + BigInt((partes[2] ?? "").padEnd(2, "0") || "0");
+  return centavos >= BigInt(1) && centavos <= BigInt(MAX_VALOR_CENTAVOS) ? Number(centavos) : null;
+}
 
 function IconeCamera() {
   return (
@@ -61,9 +85,10 @@ export function PublicarEmprestimoView() {
   const [titulo, setTitulo] = useState("");
   const [categoria, setCategoria] = useState("");
   const [condicao, setCondicao] = useState("");
-  const [valor, setValor] = useState("");
+  const [valorUnitario, setValorUnitario] = useState("");
   const [duracaoQuantidade, setDuracaoQuantidade] = useState("");
-  const [duracaoUnidade, setDuracaoUnidade] = useState("");
+  const [duracaoUnidade, setDuracaoUnidade] = useState<UnidadeDuracao | "">("");
+  const [unidadeAlteradaManualmente, setUnidadeAlteradaManualmente] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [erros, setErros] = useState<ErrosFormulario>({});
   const [status, setStatus] = useState("");
@@ -72,7 +97,7 @@ export function PublicarEmprestimoView() {
   const tituloRef = useRef<HTMLInputElement>(null);
   const categoriaRef = useRef<HTMLSelectElement>(null);
   const primeiraCondicaoRef = useRef<HTMLInputElement>(null);
-  const valorRef = useRef<HTMLInputElement>(null);
+  const valorUnitarioRef = useRef<HTMLInputElement>(null);
   const duracaoQuantidadeRef = useRef<HTMLInputElement>(null);
   const duracaoUnidadeRef = useRef<HTMLSelectElement>(null);
   const descricaoRef = useRef<HTMLTextAreaElement>(null);
@@ -94,6 +119,20 @@ export function PublicarEmprestimoView() {
   function limparErro(campo: keyof ErrosFormulario) {
     setErros((atuais) => ({ ...atuais, [campo]: undefined }));
     setStatus("");
+  }
+
+  function selecionarCategoria(novaCategoria: string) {
+    setCategoria(novaCategoria);
+    limparErro("categoria");
+    const sugestao = SUGESTOES_UNIDADE[novaCategoria];
+    if (sugestao && !unidadeAlteradaManualmente) {
+      setDuracaoUnidade(sugestao);
+      limparErro("duracaoUnidade");
+    }
+    if (sugestao && !duracaoQuantidade) {
+      setDuracaoQuantidade("1");
+      limparErro("duracaoQuantidade");
+    }
   }
 
   function selecionarFotos(event: ChangeEvent<HTMLInputElement>) {
@@ -139,19 +178,14 @@ export function PublicarEmprestimoView() {
   }
 
   function validar(): ErrosFormulario {
-    const valorCentavos = Math.round(Number(valor) * 100);
     return {
       fotos: fotos.length === 0 ? "Adicione pelo menos uma foto." : undefined,
       titulo: titulo.trim() ? undefined : "Informe o título do item.",
       categoria: categoria ? undefined : "Selecione uma categoria.",
       condicao: condicao ? undefined : "Selecione a condição do item.",
-      valor: !Number.isSafeInteger(valorCentavos) || valorCentavos <= 0
-        ? "Informe um valor maior que zero."
-        : valorCentavos > MAX_VALOR_CENTAVOS
-          ? "Informe um valor de até R$ 21.474.836,47."
-          : undefined,
-      duracaoQuantidade: Number.isInteger(Number(duracaoQuantidade)) && Number(duracaoQuantidade) > 0 && Number(duracaoQuantidade) <= 2_147_483_647 ? undefined : "Informe uma quantidade inteira maior que zero.",
+      duracaoQuantidade: Number.isInteger(Number(duracaoQuantidade)) && Number(duracaoQuantidade) >= 1 && Number(duracaoQuantidade) <= 9999 ? undefined : "Informe uma quantidade entre 1 e 9999.",
       duracaoUnidade: duracaoUnidade ? undefined : "Selecione uma unidade de duração.",
+      valorUnitario: converterValorEmCentavos(valorUnitario) === null ? "Informe um valor por unidade entre R$ 0,01 e R$ 21.474.836,47." : undefined,
       descricao: descricao.trim() ? undefined : "Descreva o item e as condições do empréstimo.",
     };
   }
@@ -168,9 +202,9 @@ export function PublicarEmprestimoView() {
         titulo: tituloRef.current,
         categoria: categoriaRef.current,
         condicao: primeiraCondicaoRef.current,
-        valor: valorRef.current,
         duracaoQuantidade: duracaoQuantidadeRef.current,
         duracaoUnidade: duracaoUnidadeRef.current,
+        valorUnitario: valorUnitarioRef.current,
         descricao: descricaoRef.current,
       };
       focos[primeiroErro]?.focus();
@@ -183,7 +217,9 @@ export function PublicarEmprestimoView() {
     dados.set("categoria", categoria);
     dados.set("condicao", condicao);
     dados.set("descricao", descricao.trim());
-    dados.set("valorCentavos", String(Math.round(Number(valor) * 100)));
+    const valorUnitarioCentavos = converterValorEmCentavos(valorUnitario);
+    if (valorUnitarioCentavos === null) return;
+    dados.set("valorUnitarioCentavos", String(valorUnitarioCentavos));
     dados.set("duracaoQuantidade", duracaoQuantidade);
     dados.set("duracaoUnidade", duracaoUnidade);
     fotos.forEach((foto) => dados.append("fotos", foto.arquivo));
@@ -192,6 +228,10 @@ export function PublicarEmprestimoView() {
   }
 
   const campoBase = "w-full rounded-xl border bg-surface px-4 py-3 text-base text-foreground outline-none placeholder:text-muted/80 focus:border-primary-500 focus:ring-2 focus:ring-primary-100";
+  const sugestaoUnidade = SUGESTOES_UNIDADE[categoria];
+  const quantidadeNumerica = Number(duracaoQuantidade);
+  const valorUnitarioCentavos = converterValorEmCentavos(valorUnitario);
+  const resumoDisponivel = duracaoUnidade && Number.isInteger(quantidadeNumerica) && quantidadeNumerica >= 1 && quantidadeNumerica <= 9999 && valorUnitarioCentavos !== null;
 
   return (
     <main className="min-h-full bg-background px-4 py-8 sm:px-6 sm:py-12">
@@ -232,7 +272,7 @@ export function PublicarEmprestimoView() {
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
                 <label htmlFor="categoria" className="mb-2 block text-sm font-semibold">Categoria</label>
-                <select ref={categoriaRef} id="categoria" name="categoria" value={categoria} onChange={(event) => { setCategoria(event.target.value); limparErro("categoria"); }} aria-invalid={Boolean(erros.categoria)} aria-describedby={erros.categoria ? "erro-categoria" : undefined} className={`${campoBase} ${erros.categoria ? "border-red-600" : "border-primary-300"}`}>
+                <select ref={categoriaRef} id="categoria" name="categoria" value={categoria} onChange={(event) => selecionarCategoria(event.target.value)} aria-invalid={Boolean(erros.categoria)} aria-describedby={erros.categoria ? "erro-categoria" : undefined} className={`${campoBase} ${erros.categoria ? "border-red-600" : "border-primary-300"}`}>
                   <option value="">Selecione uma categoria...</option>
                   <option value="ferramentas">Ferramentas</option>
                   <option value="livros">Livros</option>
@@ -244,28 +284,18 @@ export function PublicarEmprestimoView() {
                 {erros.categoria && <p id="erro-categoria" className="mt-2 text-sm font-medium text-red-700">{erros.categoria}</p>}
               </div>
 
-              <div>
-                <label htmlFor="valor" className="mb-2 block text-sm font-semibold">Valor total do empréstimo</label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">R$</span>
-                  <input ref={valorRef} id="valor" name="valor" type="number" inputMode="decimal" min="0.01" max="21474836.47" step="0.01" value={valor} onChange={(event) => { setValor(event.target.value); limparErro("valor"); }} aria-invalid={Boolean(erros.valor)} aria-describedby={erros.valor ? "erro-valor" : "ajuda-valor"} className={`${campoBase} pl-12 ${erros.valor ? "border-red-600" : "border-primary-300"}`} placeholder="0,00" />
-                </div>
-                <p id="ajuda-valor" className="mt-2 text-xs text-muted">Valor total combinado para este empréstimo.</p>
-                {erros.valor && <p id="erro-valor" className="mt-2 text-sm font-medium text-red-700">{erros.valor}</p>}
-              </div>
-
               <fieldset className="rounded-2xl border border-primary-100 bg-primary-50/40 p-4 sm:col-span-2" aria-describedby="ajuda-duracao">
                 <legend className="px-1 text-sm font-semibold">Duração do empréstimo</legend>
                 <p id="ajuda-duracao" className="mb-4 mt-1 text-xs text-muted">Defina por quanto tempo o item poderá ficar emprestado.</p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="duracao-quantidade" className="mb-2 block text-sm font-medium">Quantidade</label>
-                    <input ref={duracaoQuantidadeRef} id="duracao-quantidade" name="duracaoQuantidade" type="number" inputMode="numeric" min="1" max="2147483647" step="1" value={duracaoQuantidade} onChange={(event) => { setDuracaoQuantidade(event.target.value); limparErro("duracaoQuantidade"); }} aria-invalid={Boolean(erros.duracaoQuantidade)} aria-describedby={erros.duracaoQuantidade ? "erro-duracao-quantidade ajuda-duracao" : "ajuda-duracao"} className={`${campoBase} ${erros.duracaoQuantidade ? "border-red-600" : "border-primary-300"}`} placeholder="Ex.: 2" />
+                    <input ref={duracaoQuantidadeRef} id="duracao-quantidade" name="duracaoQuantidade" type="number" inputMode="numeric" min="1" max="9999" step="1" value={duracaoQuantidade} onChange={(event) => { setDuracaoQuantidade(event.target.value); limparErro("duracaoQuantidade"); }} aria-invalid={Boolean(erros.duracaoQuantidade)} aria-describedby={erros.duracaoQuantidade ? "erro-duracao-quantidade ajuda-duracao" : "ajuda-duracao"} className={`${campoBase} ${erros.duracaoQuantidade ? "border-red-600" : "border-primary-300"}`} placeholder="Ex.: 2" />
                     {erros.duracaoQuantidade && <p id="erro-duracao-quantidade" className="mt-2 text-sm font-medium text-red-700">{erros.duracaoQuantidade}</p>}
                   </div>
                   <div>
                     <label htmlFor="duracao-unidade" className="mb-2 block text-sm font-medium">Unidade</label>
-                    <select ref={duracaoUnidadeRef} id="duracao-unidade" name="duracaoUnidade" value={duracaoUnidade} onChange={(event) => { setDuracaoUnidade(event.target.value); limparErro("duracaoUnidade"); }} aria-invalid={Boolean(erros.duracaoUnidade)} aria-describedby={erros.duracaoUnidade ? "erro-duracao-unidade ajuda-duracao" : "ajuda-duracao"} className={`${campoBase} ${erros.duracaoUnidade ? "border-red-600" : "border-primary-300"}`}>
+                    <select ref={duracaoUnidadeRef} id="duracao-unidade" name="duracaoUnidade" value={duracaoUnidade} onChange={(event) => { setDuracaoUnidade(event.target.value as UnidadeDuracao | ""); setUnidadeAlteradaManualmente(Boolean(event.target.value)); limparErro("duracaoUnidade"); }} aria-invalid={Boolean(erros.duracaoUnidade)} aria-describedby={erros.duracaoUnidade ? "erro-duracao-unidade ajuda-duracao" : "ajuda-duracao"} className={`${campoBase} ${erros.duracaoUnidade ? "border-red-600" : "border-primary-300"}`}>
                       <option value="">Selecione...</option>
                       <option value="minutos">Minutos</option>
                       <option value="horas">Horas</option>
@@ -275,12 +305,31 @@ export function PublicarEmprestimoView() {
                     {erros.duracaoUnidade && <p id="erro-duracao-unidade" className="mt-2 text-sm font-medium text-red-700">{erros.duracaoUnidade}</p>}
                   </div>
                 </div>
-                {duracaoQuantidade && duracaoUnidade && Number(duracaoQuantidade) > 0 ? (
-                  <p className="mt-4 text-sm font-medium text-primary-700" aria-live="polite">
-                    Período: {duracaoQuantidade} {Number(duracaoQuantidade) === 1 ? { minutos: "minuto", horas: "hora", dias: "dia", semanas: "semana" }[duracaoUnidade] : duracaoUnidade}
-                  </p>
+                {sugestaoUnidade && duracaoUnidade !== sugestaoUnidade ? (
+                  <button type="button" className="mt-3 text-sm font-medium text-primary-700 underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-500" onClick={() => { setDuracaoUnidade(sugestaoUnidade); setUnidadeAlteradaManualmente(false); if (!duracaoQuantidade) setDuracaoQuantidade("1"); limparErro("duracaoUnidade"); }}>
+                    Aplicar sugestão: {UNIDADES_SINGULAR[sugestaoUnidade]}
+                  </button>
                 ) : null}
               </fieldset>
+
+              <div className="sm:col-span-2">
+                <label htmlFor="valor-unitario" className="mb-2 block text-sm font-semibold">Valor por {duracaoUnidade ? UNIDADES_SINGULAR[duracaoUnidade] : "unidade"}</label>
+                <div className="relative max-w-sm">
+                  <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">R$</span>
+                  <input ref={valorUnitarioRef} id="valor-unitario" name="valorUnitario" type="number" inputMode="decimal" min="0.01" max="21474836.47" step="0.01" value={valorUnitario} disabled={!duracaoUnidade} onChange={(event) => { setValorUnitario(event.target.value); limparErro("valorUnitario"); }} aria-invalid={Boolean(erros.valorUnitario)} aria-describedby={erros.valorUnitario ? "erro-valor-unitario" : "ajuda-valor-unitario"} className={`${campoBase} pl-12 disabled:cursor-not-allowed disabled:bg-soft disabled:opacity-70 ${erros.valorUnitario ? "border-red-600" : "border-primary-300"}`} placeholder={duracaoUnidade ? "0,00" : "Selecione a unidade primeiro"} />
+                </div>
+                <p id="ajuda-valor-unitario" className="mt-2 text-xs text-muted">Informe o preço de uma unidade do período escolhido.</p>
+                {erros.valorUnitario && <p id="erro-valor-unitario" className="mt-2 text-sm font-medium text-red-700">{erros.valorUnitario}</p>}
+              </div>
+
+              {resumoDisponivel && duracaoUnidade && valorUnitarioCentavos !== null ? (
+                <aside className="rounded-2xl border border-primary-200 bg-primary-50 p-4 sm:col-span-2" aria-live="polite">
+                  <p className="text-sm text-muted">
+                    {quantidadeNumerica} {quantidadeNumerica === 1 ? UNIDADES_SINGULAR[duracaoUnidade] : duracaoUnidade} × {FORMATADOR_BRL.format(valorUnitarioCentavos / 100)} por {UNIDADES_SINGULAR[duracaoUnidade]}
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-primary-700">Total estimado: {FORMATADOR_BRL.format((quantidadeNumerica * valorUnitarioCentavos) / 100)}</p>
+                </aside>
+              ) : null}
 
               <fieldset className="sm:col-span-2" aria-invalid={Boolean(erros.condicao)} aria-describedby={erros.condicao ? "erro-condicao" : undefined}>
                 <legend className="mb-2 text-sm font-semibold">Condição</legend>

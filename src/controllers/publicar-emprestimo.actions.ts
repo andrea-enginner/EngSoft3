@@ -18,7 +18,7 @@ export async function publicarEmprestimoAction(
         categoria: String(dados.get("categoria") ?? ""),
         condicao: String(dados.get("condicao") ?? ""),
         descricao: String(dados.get("descricao") ?? ""),
-        valorCentavos: Number(dados.get("valorCentavos")),
+        valorUnitarioCentavos: Number(dados.get("valorUnitarioCentavos")),
         duracaoQuantidade: Number(dados.get("duracaoQuantidade")),
         duracaoUnidade: String(dados.get("duracaoUnidade") ?? ""),
       },
