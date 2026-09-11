@@ -34,6 +34,7 @@ export async function publicarEmprestimo(
   if (!CONDICOES.has(entrada.condicao as CondicaoItem)) throw new PublicacaoInvalidaError("Selecione uma condição válida.");
   if (!descricao || descricao.length > 500) throw new PublicacaoInvalidaError("Informe uma descrição com até 500 caracteres.");
   if (!Number.isSafeInteger(entrada.valorCentavos) || entrada.valorCentavos <= 0) throw new PublicacaoInvalidaError("Informe um valor maior que zero.");
+  if (entrada.valorCentavos > 2_147_483_647) throw new PublicacaoInvalidaError("Informe um valor de até R$ 21.474.836,47.");
   if (!Number.isSafeInteger(entrada.duracaoQuantidade) || entrada.duracaoQuantidade <= 0 || entrada.duracaoQuantidade > 2_147_483_647) {
     throw new PublicacaoInvalidaError("Informe uma duração inteira maior que zero.");
   }

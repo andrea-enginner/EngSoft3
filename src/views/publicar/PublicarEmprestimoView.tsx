@@ -16,6 +16,7 @@ import { publicarEmprestimoAction } from "@/controllers/publicar-emprestimo.acti
 
 const MAX_FOTOS = 4;
 const MAX_TAMANHO_FOTO = 5 * 1024 * 1024;
+const MAX_VALOR_CENTAVOS = 2_147_483_647;
 const FORMATOS_ACEITOS = ["image/jpeg", "image/png", "image/webp"];
 
 type FotoSelecionada = {
@@ -138,12 +139,17 @@ export function PublicarEmprestimoView() {
   }
 
   function validar(): ErrosFormulario {
+    const valorCentavos = Math.round(Number(valor) * 100);
     return {
       fotos: fotos.length === 0 ? "Adicione pelo menos uma foto." : undefined,
       titulo: titulo.trim() ? undefined : "Informe o título do item.",
       categoria: categoria ? undefined : "Selecione uma categoria.",
       condicao: condicao ? undefined : "Selecione a condição do item.",
-      valor: Number(valor) > 0 ? undefined : "Informe um valor maior que zero.",
+      valor: !Number.isSafeInteger(valorCentavos) || valorCentavos <= 0
+        ? "Informe um valor maior que zero."
+        : valorCentavos > MAX_VALOR_CENTAVOS
+          ? "Informe um valor de até R$ 21.474.836,47."
+          : undefined,
       duracaoQuantidade: Number.isInteger(Number(duracaoQuantidade)) && Number(duracaoQuantidade) > 0 && Number(duracaoQuantidade) <= 2_147_483_647 ? undefined : "Informe uma quantidade inteira maior que zero.",
       duracaoUnidade: duracaoUnidade ? undefined : "Selecione uma unidade de duração.",
       descricao: descricao.trim() ? undefined : "Descreva o item e as condições do empréstimo.",
@@ -242,7 +248,7 @@ export function PublicarEmprestimoView() {
                 <label htmlFor="valor" className="mb-2 block text-sm font-semibold">Valor total do empréstimo</label>
                 <div className="relative">
                   <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">R$</span>
-                  <input ref={valorRef} id="valor" name="valor" type="number" inputMode="decimal" min="0.01" step="0.01" value={valor} onChange={(event) => { setValor(event.target.value); limparErro("valor"); }} aria-invalid={Boolean(erros.valor)} aria-describedby={erros.valor ? "erro-valor" : "ajuda-valor"} className={`${campoBase} pl-12 ${erros.valor ? "border-red-600" : "border-primary-300"}`} placeholder="0,00" />
+                  <input ref={valorRef} id="valor" name="valor" type="number" inputMode="decimal" min="0.01" max="21474836.47" step="0.01" value={valor} onChange={(event) => { setValor(event.target.value); limparErro("valor"); }} aria-invalid={Boolean(erros.valor)} aria-describedby={erros.valor ? "erro-valor" : "ajuda-valor"} className={`${campoBase} pl-12 ${erros.valor ? "border-red-600" : "border-primary-300"}`} placeholder="0,00" />
                 </div>
                 <p id="ajuda-valor" className="mt-2 text-xs text-muted">Valor total combinado para este empréstimo.</p>
                 {erros.valor && <p id="erro-valor" className="mt-2 text-sm font-medium text-red-700">{erros.valor}</p>}
@@ -261,10 +267,10 @@ export function PublicarEmprestimoView() {
                     <label htmlFor="duracao-unidade" className="mb-2 block text-sm font-medium">Unidade</label>
                     <select ref={duracaoUnidadeRef} id="duracao-unidade" name="duracaoUnidade" value={duracaoUnidade} onChange={(event) => { setDuracaoUnidade(event.target.value); limparErro("duracaoUnidade"); }} aria-invalid={Boolean(erros.duracaoUnidade)} aria-describedby={erros.duracaoUnidade ? "erro-duracao-unidade ajuda-duracao" : "ajuda-duracao"} className={`${campoBase} ${erros.duracaoUnidade ? "border-red-600" : "border-primary-300"}`}>
                       <option value="">Selecione...</option>
-                      <option value="minutos">Minuto(s)</option>
-                      <option value="horas">Hora(s)</option>
-                      <option value="dias">Dia(s)</option>
-                      <option value="semanas">Semana(s)</option>
+                      <option value="minutos">Minutos</option>
+                      <option value="horas">Horas</option>
+                      <option value="dias">Dias</option>
+                      <option value="semanas">Semanas</option>
                     </select>
                     {erros.duracaoUnidade && <p id="erro-duracao-unidade" className="mt-2 text-sm font-medium text-red-700">{erros.duracaoUnidade}</p>}
                   </div>
