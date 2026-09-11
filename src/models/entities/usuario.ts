@@ -9,6 +9,8 @@ export type Usuario = {
   nome: string;
   email: string;
   local: string;
+  cidade: string;
+  estado: string;
   avatar: string | null;
   membroDesde: string;
 };
@@ -27,6 +29,11 @@ export type DadosBasicos = {
   nome: string;
   email: string;
   avatar: string | null;
+};
+
+export type DadosLocalizacao = {
+  cidade: string;
+  estado: string;
 };
 
 export function iniciaisDe(nome: string): string {
