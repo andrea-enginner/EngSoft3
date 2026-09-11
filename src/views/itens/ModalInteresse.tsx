@@ -1,16 +1,20 @@
 "use client";
 
-import { FormEvent, MouseEvent, useId, useRef, useState } from "react";
+import { FormEvent, MouseEvent, useId, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { iniciarConversaAction } from "@/controllers/mensagem.actions";
 import { IconeCoracao } from "@/views/comuns/Icones";
 
 const LIMITE_MENSAGEM = 500;
 
 type Props = {
+  anuncioId: string;
   nomeDono: string;
   tituloItem: string;
 };
 
-export function ModalInteresse({ nomeDono, tituloItem }: Props) {
+export function ModalInteresse({ anuncioId, nomeDono, tituloItem }: Props) {
+  const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const botaoAbrirRef = useRef<HTMLButtonElement>(null);
   const idBase = useId();
@@ -22,6 +26,7 @@ export function ModalInteresse({ nomeDono, tituloItem }: Props) {
   const [mensagem, setMensagem] = useState(`Olá ${nomeDono}, tenho interesse em ${tituloItem}. Como podemos combinar?`);
   const [erro, setErro] = useState("");
   const [aviso, setAviso] = useState("");
+  const [enviando, iniciarEnvio] = useTransition();
 
   function abrir() {
     setErro("");
@@ -52,7 +57,16 @@ export function ModalInteresse({ nomeDono, tituloItem }: Props) {
     }
 
     setErro("");
-    setAviso("Mensagem pronta. O envio ficará disponível após a integração com o Supabase.");
+    setAviso("");
+    iniciarEnvio(async () => {
+      const resultado = await iniciarConversaAction(anuncioId, mensagemNormalizada);
+      if (!resultado.sucesso) {
+        setErro(resultado.erro);
+        return;
+      }
+      setAviso("Conversa iniciada. Abrindo mensagens...");
+      router.push(`/mensagens/${resultado.conversaId}`);
+    });
   }
 
   return (
@@ -86,8 +100,8 @@ export function ModalInteresse({ nomeDono, tituloItem }: Props) {
           {erro ? <p id={idErro} role="alert" className="mt-2 text-sm text-red-600">{erro}</p> : null}
           {aviso ? <p id={idAviso} role="status" className="mt-2 rounded-lg bg-primary-50 p-3 text-sm text-primary-900">{aviso}</p> : null}
 
-          <button type="submit" className="mt-5 w-full rounded-lg bg-primary-700 px-5 py-3 font-semibold text-white hover:bg-primary-900">Enviar mensagem</button>
-          <button type="button" onClick={fechar} className="mt-2 w-full rounded-lg px-5 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50">Cancelar</button>
+          <button type="submit" disabled={enviando} className="mt-5 w-full rounded-lg bg-primary-700 px-5 py-3 font-semibold text-white hover:bg-primary-900 disabled:cursor-wait disabled:opacity-60">{enviando ? "Enviando..." : "Enviar mensagem"}</button>
+          <button type="button" disabled={enviando} onClick={fechar} className="mt-2 w-full rounded-lg px-5 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-50">Cancelar</button>
         </form>
       </dialog>
     </>

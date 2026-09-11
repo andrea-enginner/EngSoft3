@@ -40,9 +40,11 @@ export function DetalheItemView({ item }: { item: ItemDetalhe }) {
           </section>
 
           <CartaoDono dono={item.dono} />
-          <section aria-label="Demonstrar interesse">
-            <ModalInteresse nomeDono={item.dono.nome} tituloItem={item.titulo} />
-          </section>
+          {item.tipo === "emprestimo" ? (
+            <section aria-label="Demonstrar interesse">
+              <ModalInteresse anuncioId={item.id} nomeDono={item.dono.nome} tituloItem={item.titulo} />
+            </section>
+          ) : null}
         </div>
       </div>
     </main>

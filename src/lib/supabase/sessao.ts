@@ -15,13 +15,15 @@ export async function sessaoAtual(): Promise<SessaoUsuario | null> {
 
   try {
     const supabase = await createClient();
-    const { data } = await supabase.auth.getSession();
-    const sessao = data.session;
-    if (!sessao?.user) return null;
+    const [{ data: dadosUsuario, error: erroUsuario }, { data: dadosSessao }] =
+      await Promise.all([supabase.auth.getUser(), supabase.auth.getSession()]);
+    const usuario = dadosUsuario.user;
+    const sessao = dadosSessao.session;
+    if (erroUsuario || !usuario || !sessao) return null;
 
     return {
-      usuarioId: sessao.user.id,
-      email: sessao.user.email ?? "",
+      usuarioId: usuario.id,
+      email: usuario.email ?? "",
       token: sessao.access_token,
     };
   } catch {
