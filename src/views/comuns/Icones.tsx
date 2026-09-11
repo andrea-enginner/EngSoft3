@@ -51,8 +51,11 @@ export function IconePublicar({ className }: PropsIcone) {
 
 export function IconeMensagem({ className }: PropsIcone) {
   return (
-    <svg {...BASE} className={className}>
-      <path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-7.5A8 8 0 0 1 11 4h2a8 8 0 0 1 8 8Z" />
+    <svg {...BASE} className={className} strokeWidth={1.8}>
+      <path d="M5.6 18.4 3.5 21l.7-4.4A8.2 8.2 0 0 1 3 12.3C3 7.7 7 4 12 4s9 3.7 9 8.3-4 8.2-9 8.2a9.6 9.6 0 0 1-3.6-.7" />
+      <circle cx="8.2" cy="12.2" r=".85" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12.2" r=".85" fill="currentColor" stroke="none" />
+      <circle cx="15.8" cy="12.2" r=".85" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -68,9 +71,10 @@ export function IconePerfil({ className }: PropsIcone) {
 
 export function IconeSino({ className }: PropsIcone) {
   return (
-    <svg {...BASE} className={className}>
-      <path d="M18 8a6 6 0 0 0-12 0c0 6-2 7-2 7h16s-2-1-2-7" />
-      <path d="M10.5 19a2 2 0 0 0 3 0" />
+    <svg {...BASE} className={className} strokeWidth={1.8}>
+      <path d="M18.2 10.1v2.4c0 1.7.5 3.3 1.5 4.7l.3.4H4l.3-.4a8.1 8.1 0 0 0 1.5-4.7v-2.4a6.2 6.2 0 0 1 12.4 0Z" />
+      <path d="M9.4 20a3 3 0 0 0 5.2 0" />
+      <path d="M10 4.2V3h4v1.2" />
     </svg>
   );
 }

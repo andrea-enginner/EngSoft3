@@ -1,8 +1,8 @@
 /**
  * Camada VIEW — cartão de um item do feed.
  *
- * ATENÇÃO: visual apenas. O cartão inteiro deve virar um <Link> para
- * /itens/[slug] e o coração um <button> quando houver Controller.
+ * O cartão direciona para o detalhe pelo ID do item. O coração permanece
+ * apenas visual até existir um Controller para favoritos.
  *
  * O tipo `ItemFeed` abaixo é provisório: quando você criar a camada Model,
  * mova-o para `src/models/entities/item.ts` e importe daqui. Esta View não
@@ -10,6 +10,7 @@
  */
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   IconeCondicao,
   IconeCoracao,
@@ -50,6 +51,7 @@ export function CardItem({ item }: { item: ItemFeed }) {
   const tipo = ESTILO_TIPO[item.tipo];
 
   return (
+    <Link href={`/itens/${item.id}`} className="block rounded-[18px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
     <article className="flex min-h-[410px] flex-col overflow-hidden rounded-[18px] border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       {/* Área da imagem */}
       <div className="relative h-36 overflow-hidden bg-soft">
@@ -111,5 +113,6 @@ export function CardItem({ item }: { item: ItemFeed }) {
         </div>
       </div>
     </article>
+    </Link>
   );
 }
