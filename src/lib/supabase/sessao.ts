@@ -1,9 +1,8 @@
 /**
  * Utilitário sem regra de negócio: lê a sessão do usuário a partir dos cookies.
  *
- * Enquanto a autenticação não estiver implementada, `sessaoAtual()` devolve
- * `null` e a tela cai no modo demonstração — mesmo comportamento já adotado em
- * `emprestimo.repository.ts`.
+ * Este é o único ponto que precisará ser adaptado quando o fluxo de
+ * autenticação da aplicação for integrado.
  */
 
 import type { SessaoUsuario } from "@/models/entities/usuario";
@@ -15,13 +14,16 @@ export async function sessaoAtual(): Promise<SessaoUsuario | null> {
 
   try {
     const supabase = await createClient();
-    const { data } = await supabase.auth.getSession();
-    const sessao = data.session;
-    if (!sessao?.user) return null;
+    const [{ data: usuario }, { data: dadosSessao }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.auth.getSession(),
+    ]);
+    const sessao = dadosSessao.session;
+    if (!usuario.user || !sessao?.access_token) return null;
 
     return {
-      usuarioId: sessao.user.id,
-      email: sessao.user.email ?? "",
+      usuarioId: usuario.user.id,
+      email: usuario.user.email ?? "",
       token: sessao.access_token,
     };
   } catch {

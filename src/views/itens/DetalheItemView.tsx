@@ -32,6 +32,7 @@ export function DetalheItemView({ item }: { item: ItemDetalhe }) {
               <time dateTime={item.publicadoEm}>{formatarPublicacao(item.publicadoEm)}</time>
             </div>
             <p className="mt-6 leading-relaxed text-foreground">{item.descricao}</p>
+            {item.valorUnitarioCentavos ? <p className="mt-4 text-xl font-bold text-primary-700">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.valorUnitarioCentavos / 100)}</p> : null}
             {item.aceitaPropostas ? <p className="mt-4 font-semibold text-primary-700">Aceito propostas!</p> : null}
             <p className="mt-5 flex items-center gap-2 border-t border-border pt-4 text-sm text-muted">
               <IconeCondicao className="h-4 w-4" />
