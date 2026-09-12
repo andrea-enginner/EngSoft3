@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { loginAction } from "@/controllers/auth.actions";
 
 export function LoginForm() {
   return (
@@ -36,7 +37,7 @@ export function LoginForm() {
         </Link>
       </div>
 
-      <form className="flex flex-col">
+      <form action={loginAction} className="flex flex-col">
 
         {/* E-mail */}
         <div className="flex flex-col gap-2">
@@ -54,6 +55,7 @@ export function LoginForm() {
               id="email"
               name="email"
               type="email"
+              required
               placeholder="seu@email.com"
               className="
                 h-full
@@ -84,6 +86,7 @@ export function LoginForm() {
               id="senha"
               name="senha"
               type="password"
+              required
               placeholder="••••••••"
               className="
                 h-full
@@ -104,26 +107,26 @@ export function LoginForm() {
           </span>
         </div>
 
-        <Link
-            href="/feed"
-            className="
-                mt-7
-                flex
-                h-[47px]
-                items-center
-                justify-center
-                gap-2
-                rounded-[10px]
-                bg-[#4d2898]
-                text-[14px]
-                font-medium
-                text-white
-                hover:bg-[#3f2081]
-            "
-            >
-            Entrar
-            <span aria-hidden="true">→</span>
-        </Link>
+        <button
+          type="submit"
+          className="
+            mt-7
+            flex
+            h-[47px]
+            items-center
+            justify-center
+            gap-2
+            rounded-[10px]
+            bg-[#4d2898]
+            text-[14px]
+            font-medium
+            text-white
+            hover:bg-[#3f2081]
+          "
+        >
+          Entrar
+          <span aria-hidden="true">→</span>
+        </button>
       </form>
 
       {/* Divisor */}

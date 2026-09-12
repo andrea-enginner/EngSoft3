@@ -1,4 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import { cadastrarAction } from "@/controllers/auth.actions";
 
 type CampoProps = {
   label: string;
@@ -26,6 +30,7 @@ function Campo({
         id={name}
         name={name}
         type={type}
+        required
         placeholder={placeholder}
         className="
           h-[47px]
@@ -48,10 +53,69 @@ function Campo({
   );
 }
 
+function formatarCpf(valor: string) {
+  return valor
+    .replace(/\D/g, "")
+    .slice(0, 11)
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+}
+
+function formatarTelefone(valor: string) {
+  const numeros = valor.replace(/\D/g, "").slice(0, 11);
+
+  if (numeros.length <= 10) {
+    return numeros
+      .replace(/(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  }
+
+  return numeros
+    .replace(/(\d{2})(\d)/, "($1) $2")
+    .replace(/(\d{5})(\d)/, "$1-$2");
+}
+
+function formatarCep(valor: string) {
+  return valor
+    .replace(/\D/g, "")
+    .slice(0, 8)
+    .replace(/(\d{5})(\d)/, "$1-$2");
+}
+
+function formatarData(valor: string) {
+  return valor
+    .replace(/\D/g, "")
+    .slice(0, 8)
+    .replace(/(\d{2})(\d)/, "$1/$2")
+    .replace(/(\d{2})(\d)/, "$1/$2");
+}
+
+const inputClassName = `
+  h-[47px]
+  w-full
+  rounded-[11px]
+  border
+  border-[#cec8d5]
+  bg-white
+  px-4
+  text-[14px]
+  text-[#29252f]
+  outline-none
+  placeholder:text-[#7d8494]
+  focus:border-primary-500
+  focus:ring-1
+  focus:ring-primary-300
+`;
+
 export function CadastroForm() {
+  const [cpf, setCpf] = useState("");
+  const [dataNascimento, setDataNascimento] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [cep, setCep] = useState("");
+
   return (
     <div className="w-full max-w-[430px]">
-
       {/* Abas */}
       <div className="mb-7 flex h-[24px] overflow-hidden rounded-full">
         <Link
@@ -84,8 +148,10 @@ export function CadastroForm() {
         </span>
       </div>
 
-      <form className="flex flex-col gap-[15px]">
-
+      <form
+        action={cadastrarAction}
+        className="flex flex-col gap-[15px]"
+      >
         <Campo
           label="Nome Completo"
           name="nome"
@@ -99,30 +165,101 @@ export function CadastroForm() {
           placeholder="seu@email.com"
         />
 
-        <Campo
-          label="CPF"
-          name="cpf"
-          placeholder="000.000.000-00"
-        />
+        {/* CPF */}
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="cpf"
+            className="text-[14px] font-medium text-[#29252f]"
+          >
+            CPF
+          </label>
 
-        <Campo
-          label="Data de Nascimento"
-          name="dataNascimento"
-          placeholder="00/00/0000"
-        />
+          <input
+            id="cpf"
+            name="cpf"
+            type="text"
+            inputMode="numeric"
+            value={cpf}
+            onChange={(e) => setCpf(formatarCpf(e.target.value))}
+            maxLength={14}
+            required
+            placeholder="000.000.000-00"
+            className={inputClassName}
+          />
+        </div>
 
-        <Campo
-          label="Telefone"
-          name="telefone"
-          type="tel"
-          placeholder="+55 (87) 99999 - 9999"
-        />
+        {/* Data de nascimento */}
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="dataNascimento"
+            className="text-[14px] font-medium text-[#29252f]"
+          >
+            Data de Nascimento
+          </label>
 
-        <Campo
-          label="CEP"
-          name="cep"
-          placeholder="00.000-00"
-        />
+          <input
+            id="dataNascimento"
+            name="dataNascimento"
+            type="text"
+            inputMode="numeric"
+            value={dataNascimento}
+            onChange={(e) =>
+              setDataNascimento(formatarData(e.target.value))
+            }
+            maxLength={10}
+            required
+            placeholder="00/00/0000"
+            className={inputClassName}
+          />
+        </div>
+
+        {/* Telefone */}
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="telefone"
+            className="text-[14px] font-medium text-[#29252f]"
+          >
+            Telefone
+          </label>
+
+          <input
+            id="telefone"
+            name="telefone"
+            type="text"
+            inputMode="numeric"
+            value={telefone}
+            onChange={(e) =>
+              setTelefone(formatarTelefone(e.target.value))
+            }
+            maxLength={15}
+            required
+            placeholder="(87) 99999-9999"
+            className={inputClassName}
+          />
+        </div>
+
+        {/* CEP */}
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="cep"
+            className="text-[14px] font-medium text-[#29252f]"
+          >
+            CEP
+          </label>
+
+          <input
+            id="cep"
+            name="cep"
+            type="text"
+            inputMode="numeric"
+            value={cep}
+            onChange={(e) => setCep(formatarCep(e.target.value))}
+            maxLength={9}
+            required
+            placeholder="00000-000"
+            className={inputClassName}
+          />
+        </div>
 
         <Campo
           label="Cidade"
@@ -150,8 +287,8 @@ export function CadastroForm() {
           placeholder="••••••••"
         />
 
-        <Link
-          href="/feed"
+        <button
+          type="submit"
           className="
             mt-1
             flex
@@ -170,7 +307,7 @@ export function CadastroForm() {
         >
           Cadastrar
           <span aria-hidden="true">→</span>
-        </Link>
+        </button>
       </form>
 
       {/* Divisor */}
