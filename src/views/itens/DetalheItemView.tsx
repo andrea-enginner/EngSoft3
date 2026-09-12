@@ -2,6 +2,7 @@ import type { ItemDetalhe } from "@/models/entities/item-detalhe";
 import { formatarPublicacao } from "@/lib/formatar-publicacao";
 import { calcularTotal, formatarDuracao, formatarTarifa, formatarValor } from "@/lib/formatar-emprestimo";
 import { IconeCondicao, IconeDoacao, IconeEmprestimo, IconeLocal } from "@/views/comuns/Icones";
+import { AcessoRestrito } from "@/views/auth/AcessoRestrito";
 import { CartaoDono } from "@/views/itens/CartaoDono";
 import { GaleriaItem } from "@/views/itens/GaleriaItem";
 import { ModalInteresse } from "@/views/itens/ModalInteresse";
@@ -11,7 +12,7 @@ const APRESENTACAO_TIPO = {
   emprestimo: { rotulo: "Empréstimo", classe: "bg-emprestimo", Icone: IconeEmprestimo },
 } as const;
 
-export function DetalheItemView({ item }: { item: ItemDetalhe }) {
+export function DetalheItemView({ item, autenticado }: { item: ItemDetalhe; autenticado: boolean }) {
   const tipo = APRESENTACAO_TIPO[item.tipo];
   const termos = item.tipo === "emprestimo" && item.valorUnitarioCentavos && item.duracaoQuantidade && item.duracaoUnidade
     ? { valor: item.valorUnitarioCentavos, quantidade: item.duracaoQuantidade, unidade: item.duracaoUnidade }
@@ -51,7 +52,7 @@ export function DetalheItemView({ item }: { item: ItemDetalhe }) {
 
           <CartaoDono dono={item.dono} />
           {termos ? <section aria-label="Solicitar reserva">
-            <ModalInteresse
+            {autenticado ? <ModalInteresse
               anuncioId={item.id}
               nomeDono={item.dono.nome}
               tituloItem={item.titulo}
@@ -59,7 +60,7 @@ export function DetalheItemView({ item }: { item: ItemDetalhe }) {
               duracaoQuantidade={termos.quantidade}
               duracaoUnidade={termos.unidade}
               condicao={item.condicao !== "Não informada" ? item.condicao : undefined}
-            />
+            /> : <AcessoRestrito compacto titulo="Entre para solicitar este item" descricao="Faça login ou crie uma conta para reservar e conversar com o proprietário." destino={`/itens/${item.id}`} />}
           </section> : item.tipo === "emprestimo" ? <p className="rounded-xl border border-border bg-soft p-4 text-center text-sm text-muted">As condições desta reserva ainda não foram informadas.</p> : null}
         </div>
       </div>

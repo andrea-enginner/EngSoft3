@@ -1,6 +1,7 @@
 import {
   cadastrarUsuario,
   loginUsuario,
+  logoutUsuario,
 } from "@/models/repositories/auth.repository";
 
 type DadosCadastro = {
@@ -50,4 +51,12 @@ export async function login(email: string, senha: string) {
   }
 
   return data;
+}
+
+export async function logout() {
+  const { error } = await logoutUsuario();
+
+  if (error) {
+    throw new Error("Não foi possível encerrar a sessão.");
+  }
 }

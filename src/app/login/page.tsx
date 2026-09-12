@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: "Entre na sua conta do Ciclo.",
 };
 
-export default function LoginPage() {
-  return <LoginView />;
+export default async function LoginPage({ searchParams }: PageProps<"/login">) {
+  const parametros = await searchParams;
+  const proximaRota = typeof parametros.next === "string" ? parametros.next : "/feed";
+  return <LoginView proximaRota={proximaRota} />;
 }

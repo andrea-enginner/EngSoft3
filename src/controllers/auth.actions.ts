@@ -4,7 +4,15 @@ import { redirect } from "next/navigation";
 import {
   cadastrar,
   login,
+  logout,
 } from "@/models/services/auth.service";
+
+function destinoSeguro(valor: FormDataEntryValue | null) {
+  const destino = valor?.toString() ?? "/feed";
+  return destino.startsWith("/") && !destino.startsWith("//")
+    ? destino
+    : "/feed";
+}
 
 export async function loginAction(formData: FormData) {
   const email = formData.get("email")?.toString() ?? "";
@@ -12,7 +20,7 @@ export async function loginAction(formData: FormData) {
 
   await login(email, senha);
 
-  redirect("/feed");
+  redirect(destinoSeguro(formData.get("next")));
 }
 
 export async function cadastrarAction(formData: FormData) {
@@ -43,4 +51,9 @@ export async function cadastrarAction(formData: FormData) {
   });
 
   redirect("/feed");
+}
+
+export async function logoutAction() {
+  await logout();
+  redirect("/login");
 }
