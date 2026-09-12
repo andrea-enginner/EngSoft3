@@ -57,12 +57,6 @@ export async function logout() {
   const { error } = await logoutUsuario();
 
   if (error) {
-<<<<<<< HEAD
-    throw new Error("Não foi possível encerrar a sessão.");
-  }
-}
-=======
     throw new Error("Não foi possível sair da conta.");
   }
 }
->>>>>>> origin/main
