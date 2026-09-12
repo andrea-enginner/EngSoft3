@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 import { Cabecalho } from "@/views/layout/Cabecalho";
+import { Rodape } from "@/views/layout/Rodape";
 
 export const metadata: Metadata = {
   title: {
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <Cabecalho />
         <div className="flex-1">{children}</div>
+        <Rodape />
       </body>
     </html>
   );

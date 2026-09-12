@@ -1,4 +1,5 @@
 import type { StatusSolicitacao } from "@/models/entities/mensagem";
+import { IconeTrocas } from "@/views/comuns/Icones";
 
 type Props = {
   status: StatusSolicitacao;
@@ -21,7 +22,9 @@ export function CartaoSolicitacao({ status, usuarioEProprietario, respondendo, o
   const apresentacao = APRESENTACAO[status];
   return (
     <aside className="mx-auto my-5 w-full max-w-md rounded-2xl border border-primary-100 bg-white p-4 text-center shadow-sm" aria-live="polite">
-      <span className="mx-auto grid h-9 w-9 place-items-center rounded-full bg-primary-50 text-primary-700">◇</span>
+      <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-primary-50 text-primary-700" aria-hidden="true">
+        <IconeTrocas className="h-5 w-5" />
+      </span>
       <strong className="mt-2 block text-sm text-primary-900">Solicitação de empréstimo</strong>
       <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${apresentacao.classe}`}>{apresentacao.texto}</span>
       {status === "aguardando" && usuarioEProprietario ? (

@@ -51,8 +51,46 @@ export function IconePublicar({ className }: PropsIcone) {
 
 export function IconeMensagem({ className }: PropsIcone) {
   return (
+    <svg {...BASE} className={className} strokeWidth={1.8}>
+      <path d="M5.6 18.4 3.5 21l.7-4.4A8.2 8.2 0 0 1 3 12.3C3 7.7 7 4 12 4s9 3.7 9 8.3-4 8.2-9 8.2a9.6 9.6 0 0 1-3.6-.7" />
+      <circle cx="8.2" cy="12.2" r=".85" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12.2" r=".85" fill="currentColor" stroke="none" />
+      <circle cx="15.8" cy="12.2" r=".85" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function IconeBusca({ className }: PropsIcone) {
+  return (
     <svg {...BASE} className={className}>
-      <path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-7.5A8 8 0 0 1 11 4h2a8 8 0 0 1 8 8Z" />
+      <circle cx="11" cy="11" r="7" />
+      <path d="m16 16 5 5" />
+    </svg>
+  );
+}
+
+export function IconeOrdenacao({ className }: PropsIcone) {
+  return (
+    <svg {...BASE} className={className}>
+      <path d="M8 4v16m0-16L4.5 7.5M8 4l3.5 3.5" />
+      <path d="M16 20V4m0 16-3.5-3.5M16 20l3.5-3.5" />
+    </svg>
+  );
+}
+
+export function IconeEmoji({ className }: PropsIcone) {
+  return (
+    <svg {...BASE} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 10h.01M15.5 10h.01M8 14.5a5.5 5.5 0 0 0 8 0" />
+    </svg>
+  );
+}
+
+export function IconeAnexo({ className }: PropsIcone) {
+  return (
+    <svg {...BASE} className={className} strokeWidth={2.25}>
+      <path d="m20.5 11.5-8.9 8.9a6 6 0 0 1-8.5-8.5l9.6-9.6a4 4 0 0 1 5.7 5.7l-9.7 9.7a2 2 0 0 1-2.8-2.8l9-9" />
     </svg>
   );
 }

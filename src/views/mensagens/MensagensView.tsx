@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Mensagem, PainelMensagens, StatusSolicitacao, TipoMensagem } from "@/models/entities/mensagem";
 import { CartaoSolicitacao } from "@/views/mensagens/CartaoSolicitacao";
 import { ListaConversas } from "@/views/mensagens/ListaConversas";
+import { IconeAnexo, IconeBusca, IconeEmoji, IconeMensagem, IconeOrdenacao } from "@/views/comuns/Icones";
 
 type Props = {
   painel: PainelMensagens;
@@ -82,6 +83,7 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
   );
   const [status, setStatus] = useState<StatusSolicitacao>(painel.conversaAtiva?.status ?? "aguardando");
   const [erro, setErro] = useState("");
+  const [mostrarEmojis, setMostrarEmojis] = useState(false);
   const [enviando, iniciarEnvio] = useTransition();
   const [respondendo, iniciarResposta] = useTransition();
   const fimRef = useRef<HTMLDivElement>(null);
@@ -206,6 +208,11 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
     });
   }
 
+  function inserirEmoji(emoji: string) {
+    setTexto((atual) => `${atual}${emoji}`);
+    setMostrarEmojis(false);
+  }
+
   function responder(aceitar: boolean) {
     if (!conversa) return;
     setErro("");
@@ -246,7 +253,7 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-8 sm:py-10">
       <header className="mb-7 flex items-center gap-4">
-        <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary-100 text-2xl text-primary-500" aria-hidden="true">▱</span>
+        <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary-100 text-primary-500" aria-hidden="true"><IconeMensagem className="h-7 w-7" /></span>
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Mensagens</h1>
           <p className="text-sm text-muted">Converse com outros membros da comunidade Ciclo.</p>
@@ -261,9 +268,9 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
 
       <div className="grid min-h-[620px] overflow-hidden rounded-2xl border border-border bg-white shadow-[0_10px_35px_rgba(76,29,149,.06)] lg:grid-cols-[338px_1fr]">
         <aside className={`${mostrarConversaNoMobile ? "hidden" : "block"} border-r border-border lg:block`} aria-label="Conversas">
-          <div className="grid grid-cols-[1fr_104px_40px] gap-2 border-b border-border p-4">
+          <div className="grid grid-cols-[minmax(0,1fr)_104px_42px] gap-2 border-b border-border p-4">
             <label className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 focus-within:border-primary-500">
-              <span className="text-muted" aria-hidden="true">⌕</span>
+              <IconeBusca className="h-5 w-5 shrink-0 text-muted" />
               <span className="sr-only">Buscar conversas</span>
               <input value={busca} onChange={(evento) => setBusca(evento.target.value)} placeholder="Buscar conversas..." className="min-w-0 flex-1 py-2 text-xs outline-none" />
             </label>
@@ -272,7 +279,7 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
               <option value="nao-lidas">Não lidas</option>
               <option value="aguardando">Pendentes</option>
             </select>
-            <button type="button" onClick={() => setOrdemRecente((atual) => !atual)} aria-label="Inverter ordem das conversas" title="Inverter ordem" className="rounded-lg border border-border text-muted hover:bg-primary-50 hover:text-primary-700">⇅</button>
+            <button type="button" onClick={() => setOrdemRecente((atual) => !atual)} aria-label={`Ordenar pelas conversas ${ordemRecente ? "mais antigas" : "mais recentes"}`} title="Inverter ordem" aria-pressed={!ordemRecente} className="grid h-10 w-10 place-items-center self-center justify-self-center rounded-lg border border-border text-muted hover:bg-primary-50 hover:text-primary-700"><IconeOrdenacao className="h-5 w-5" /></button>
           </div>
           <div className="max-h-[548px] overflow-y-auto p-3">
             <ListaConversas conversas={conversasFiltradas} conversaAtivaId={conversa?.id} />
@@ -323,11 +330,14 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
               <footer className="border-t border-border p-3 sm:p-4">
                 {erro ? <p className="mb-2 text-xs text-red-600" role="alert">{erro}</p> : null}
                 <form onSubmit={enviar} className="flex items-end gap-2">
-                  <button type="button" disabled title="Anexos estarão disponíveis em breve" aria-label="Anexar arquivo — indisponível" className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-lg text-slate-400 disabled:cursor-not-allowed">⌕</button>
-                  <label className="flex min-h-11 flex-1 items-end rounded-lg border border-border px-3 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100">
+                  <button type="button" disabled title="Anexos estarão disponíveis em breve" aria-label="Anexar arquivo — indisponível" className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-slate-500 disabled:cursor-not-allowed disabled:opacity-70"><IconeAnexo className="h-6 w-6" /></button>
+                  <label className="flex min-h-11 flex-1 items-end rounded-lg border border-border pl-3 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100">
                     <span className="sr-only">Digite sua mensagem</span>
                     <textarea value={texto} onChange={(evento) => { setTexto(evento.target.value); setErro(""); }} onKeyDown={(evento) => { if (evento.key === "Enter" && !evento.shiftKey) { evento.preventDefault(); evento.currentTarget.form?.requestSubmit(); } }} rows={1} maxLength={500} placeholder="Digite sua mensagem" className="max-h-28 min-h-10 flex-1 resize-none py-2.5 text-sm outline-none" />
-                    <span className="pb-2.5 text-slate-400" aria-hidden="true">☺</span>
+                    <span className="relative self-stretch">
+                      <button type="button" onClick={() => setMostrarEmojis((atual) => !atual)} aria-label="Escolher emoji" aria-expanded={mostrarEmojis} className="grid h-full w-11 place-items-center rounded-r-lg text-slate-400 hover:bg-primary-50 hover:text-primary-700"><IconeEmoji className="h-6 w-6" /></button>
+                      {mostrarEmojis ? <span role="dialog" aria-label="Escolha um emoji" className="absolute bottom-12 right-0 z-10 flex gap-1 rounded-xl border border-border bg-white p-2 shadow-lg">{["😀", "😊", "👍", "❤️", "🎉"].map((emoji) => <button key={emoji} type="button" onClick={() => inserirEmoji(emoji)} className="grid h-9 w-9 place-items-center rounded-lg text-xl hover:bg-primary-50" aria-label={`Inserir ${emoji}`}>{emoji}</button>)}</span> : null}
+                    </span>
                   </label>
                   <button type="submit" disabled={enviando || !texto.trim()} aria-label="Enviar mensagem" className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary-700 text-xl text-white hover:bg-primary-900 disabled:cursor-not-allowed disabled:opacity-50">➤</button>
                 </form>
@@ -336,7 +346,7 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
             </>
           ) : (
             <div className="grid flex-1 place-items-center p-8 text-center">
-              <div><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary-50 text-3xl text-primary-500">▱</span><h2 className="mt-4 font-bold text-slate-800">Suas conversas aparecerão aqui</h2><p className="mt-1 text-sm text-muted">Demonstre interesse em um empréstimo para começar.</p></div>
+              <div><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary-50 text-primary-500"><IconeMensagem className="h-8 w-8" /></span><h2 className="mt-4 font-bold text-slate-800">Suas conversas aparecerão aqui</h2><p className="mt-1 text-sm text-muted">Demonstre interesse em um empréstimo para começar.</p></div>
             </div>
           )}
         </section>
