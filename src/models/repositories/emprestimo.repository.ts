@@ -1,6 +1,7 @@
 import { credenciaisSupabase, executarRpc, executarRpcSupabase, urlPublicaStorage } from "@/lib/supabase/rest";
 import type { Emprestimo, PapelEmprestimo, StatusEmprestimo } from "@/models/entities/emprestimo";
 import type { UnidadeDuracao } from "@/models/entities/item";
+import type { StatusPagamento } from "@/models/entities/pagamento";
 import type { SessaoUsuario } from "@/models/entities/usuario";
 
 const DEMONSTRACAO: Emprestimo[] = [{
@@ -37,12 +38,14 @@ type RegistroEmprestimo = {
   duracao_quantidade: number;
   duracao_unidade: string;
   imagem: string | null;
+  status_pagamento: string | null;
 };
 
 const STATUS: StatusEmprestimo[] = [
   "aguardando", "aceito", "negociacao", "andamento", "devolucao", "concluido", "recusado",
 ];
 const UNIDADES: UnidadeDuracao[] = ["minutos", "horas", "dias", "semanas"];
+const STATUS_PAGAMENTO: StatusPagamento[] = ["pendente", "processando", "aprovado", "recusado", "cancelado"];
 
 function normalizar(registro: RegistroEmprestimo): Emprestimo {
   const imagem = registro.imagem?.trim();
@@ -68,6 +71,9 @@ function normalizar(registro: RegistroEmprestimo): Emprestimo {
     imagem: imagem
       ? (imagem.startsWith("http") || imagem.startsWith("/") ? imagem : urlPublicaStorage("anuncios", imagem))
       : null,
+    statusPagamento: STATUS_PAGAMENTO.includes(registro.status_pagamento as StatusPagamento)
+      ? registro.status_pagamento as StatusPagamento
+      : undefined,
   };
 }
 

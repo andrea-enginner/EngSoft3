@@ -225,3 +225,21 @@ export function IconeEngrenagem({ className }: PropsIcone) {
     </svg>
   );
 }
+
+export function IconeCartao({ className }: PropsIcone) {
+  return (
+    <svg {...BASE} className={className}>
+      <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+      <path d="M2.5 9h19M6.5 15h4" />
+    </svg>
+  );
+}
+
+export function IconeEscudo({ className }: PropsIcone) {
+  return (
+    <svg {...BASE} className={className}>
+      <path d="M12 3 20 6v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3Z" />
+      <path d="m8.5 12 2.2 2.2 4.8-5" />
+    </svg>
+  );
+}

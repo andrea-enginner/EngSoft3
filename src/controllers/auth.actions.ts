@@ -55,5 +55,11 @@ export async function cadastrarAction(formData: FormData) {
 
 export async function logoutAction() {
   await logout();
+<<<<<<< HEAD
   redirect("/login");
 }
+=======
+
+  redirect("/feed");
+}
+>>>>>>> origin/main
