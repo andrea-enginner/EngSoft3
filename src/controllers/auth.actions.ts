@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import {
   cadastrar,
   login,
+  logout,
 } from "@/models/services/auth.service";
 
 export async function loginAction(formData: FormData) {
@@ -41,6 +42,12 @@ export async function cadastrarAction(formData: FormData) {
     senha,
     confirmarSenha,
   });
+
+  redirect("/feed");
+}
+
+export async function logoutAction() {
+  await logout();
 
   redirect("/feed");
 }
