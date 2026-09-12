@@ -18,7 +18,7 @@ export async function sessaoAtual(): Promise<SessaoUsuario | null> {
       await Promise.all([supabase.auth.getUser(), supabase.auth.getSession()]);
     const usuario = dadosUsuario.user;
     const sessao = dadosSessao.session;
-    if (erroUsuario || !usuario || !sessao) return null;
+    if (erroUsuario || !usuario || !sessao?.access_token) return null;
 
     return {
       usuarioId: usuario.id,
