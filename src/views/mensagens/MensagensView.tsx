@@ -139,7 +139,7 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
         {
           event: "UPDATE",
           schema: "public",
-          table: "emprestimos",
+          table: "solicitacoes_emprestimo",
           filter: `conversa_id=eq.${conversa.id}`,
         },
         (evento) => {

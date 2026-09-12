@@ -1,80 +1,103 @@
-import type { Emprestimo, StatusEmprestimo } from "@/models/entities/emprestimo";
+import { credenciaisSupabase, executarRpc, executarRpcSupabase, urlPublicaStorage } from "@/lib/supabase/rest";
+import type { Emprestimo, PapelEmprestimo, StatusEmprestimo } from "@/models/entities/emprestimo";
+import type { UnidadeDuracao } from "@/models/entities/item";
 import type { SessaoUsuario } from "@/models/entities/usuario";
-import { executarRpcSupabase } from "@/lib/supabase/rest";
 
-const FURADEIRA: Emprestimo = {
-  id: "furadeira-impacto",
-  nome: "Furadeira de Impacto",
-  pessoa: "Ana L.",
-  data: "Até 05 Nov 2026",
-  status: "devolucao",
-  emoji: "🛠️",
-  cor: "from-amber-100 to-orange-200",
-  papel: "proprietario",
+const DEMONSTRACAO: Emprestimo[] = [{
+  id: "demo-emprestimo",
+  anuncioId: "2",
+  conversaId: "demo-solicitado",
+  papel: "interessado",
+  nome: "Livro: O Design do Dia a Dia",
+  pessoa: "Lucas Martins",
+  inicioEm: new Date(Date.now() + 86_400_000).toISOString(),
+  fimEm: new Date(Date.now() + 16 * 86_400_000).toISOString(),
+  criadoEm: new Date().toISOString(),
+  status: "aguardando",
+  valorUnitarioCentavos: 2500,
+  valorTotalCentavos: 37500,
+  duracaoQuantidade: 15,
+  duracaoUnidade: "dias",
+  imagem: "/itens/livro_legal.jpg",
+}];
+
+type RegistroEmprestimo = {
+  id: string;
+  anuncio_id: string;
+  conversa_id: string | null;
+  papel: string;
+  titulo: string;
+  pessoa: string;
+  inicio_em: string;
+  fim_em: string;
+  criado_em: string;
+  status: string;
+  valor_unitario_centavos: number;
+  valor_total_centavos: number;
+  duracao_quantidade: number;
+  duracao_unidade: string;
+  imagem: string | null;
 };
 
-const SOLICITACOES_DEMONSTRACAO: Emprestimo[] = [
-  {
-    id: "demo-emprestimo-livros",
-    conversaId: "demo-livros",
-    nome: "Coleção de Livros de Design",
-    pessoa: "Mariana Oliveira",
-    data: "Solicitado ontem",
-    status: "aguardando",
-    emoji: "📚",
-    cor: "from-violet-100 to-purple-200",
-    papel: "proprietario",
-  },
-  {
-    id: "demo-emprestimo-violao",
-    conversaId: "demo-violao",
-    nome: "Violão Acústico Giannini",
-    pessoa: "Ana Clara",
-    data: "Solicitado há 5 dias",
-    status: "recusado",
-    emoji: "🎸",
-    cor: "from-orange-100 to-amber-200",
-    papel: "solicitante",
-  },
+const STATUS: StatusEmprestimo[] = [
+  "aguardando", "aceito", "negociacao", "andamento", "devolucao", "concluido", "recusado",
 ];
+const UNIDADES: UnidadeDuracao[] = ["minutos", "horas", "dias", "semanas"];
 
-type RegistroSupabase = {
-  id: string | number;
-  nome?: string;
-  titulo?: string;
-  pessoa?: string;
-  locatario_nome?: string;
-  data?: string;
-  data_devolucao?: string;
-  status?: string;
-  emoji?: string;
-  cor?: string;
-  conversa_id?: string;
-  papel?: "proprietario" | "solicitante";
-};
-
-function normalizar(registro: RegistroSupabase): Emprestimo {
-  const statusValidos: StatusEmprestimo[] = ["andamento", "devolucao", "concluido", "aguardando", "aceito", "negociacao", "recusado"];
-  const status = statusValidos.includes(registro.status as StatusEmprestimo) ? registro.status as StatusEmprestimo : "andamento";
+function normalizar(registro: RegistroEmprestimo): Emprestimo {
+  const imagem = registro.imagem?.trim();
   return {
-    id: String(registro.id),
-    conversaId: registro.conversa_id,
-    nome: registro.nome ?? registro.titulo ?? "Item sem nome",
-    pessoa: registro.pessoa ?? registro.locatario_nome ?? "Não informado",
-    data: registro.data ?? (registro.data_devolucao ? `Até ${registro.data_devolucao}` : "Data não informada"),
-    status,
-    emoji: registro.emoji ?? "🛠️",
-    cor: registro.cor ?? "from-amber-100 to-orange-200",
-    papel: registro.papel,
+    id: registro.id,
+    anuncioId: registro.anuncio_id,
+    conversaId: registro.conversa_id ?? undefined,
+    papel: (registro.papel === "dono" ? "dono" : "interessado") as PapelEmprestimo,
+    nome: registro.titulo,
+    pessoa: registro.pessoa,
+    inicioEm: registro.inicio_em,
+    fimEm: registro.fim_em,
+    criadoEm: registro.criado_em,
+    status: STATUS.includes(registro.status as StatusEmprestimo)
+      ? registro.status as StatusEmprestimo
+      : "aguardando",
+    valorUnitarioCentavos: registro.valor_unitario_centavos,
+    valorTotalCentavos: registro.valor_total_centavos,
+    duracaoQuantidade: registro.duracao_quantidade,
+    duracaoUnidade: UNIDADES.includes(registro.duracao_unidade as UnidadeDuracao)
+      ? registro.duracao_unidade as UnidadeDuracao
+      : "dias",
+    imagem: imagem
+      ? (imagem.startsWith("http") || imagem.startsWith("/") ? imagem : urlPublicaStorage("anuncios", imagem))
+      : null,
   };
 }
 
-export async function buscarMeusEmprestimos(sessao: SessaoUsuario | null = null): Promise<{ dados: Emprestimo[]; fonte: "supabase" | "demonstracao" }> {
-  if (!sessao) return { dados: [FURADEIRA, ...SOLICITACOES_DEMONSTRACAO], fonte: "demonstracao" };
+export type ResultadoEmprestimos = {
+  dados: Emprestimo[];
+  fonte: "supabase" | "demonstracao";
+  requerLogin: boolean;
+};
 
-  const registros = await executarRpcSupabase<RegistroSupabase[]>(
-    "listar_emprestimos",
+export async function buscarMeusEmprestimos(sessao: SessaoUsuario | null): Promise<ResultadoEmprestimos> {
+  if (!credenciaisSupabase()) return { dados: DEMONSTRACAO, fonte: "demonstracao", requerLogin: false };
+  if (!sessao) return { dados: [], fonte: "supabase", requerLogin: true };
+
+  const registros = await executarRpc<RegistroEmprestimo>(
+    "listar_minhas_solicitacoes_emprestimo",
+    {},
     sessao.token,
   );
-  return { dados: registros.map(normalizar), fonte: "supabase" };
+  return { dados: (registros ?? []).map(normalizar), fonte: "supabase", requerLogin: false };
+}
+
+export async function criarSolicitacaoEmprestimo(
+  sessao: SessaoUsuario,
+  anuncioId: string,
+  inicioEm: string,
+): Promise<string> {
+  const id = await executarRpcSupabase<string>(
+    "solicitar_reserva",
+    sessao.token,
+    { p_anuncio_id: anuncioId, p_inicio_em: inicioEm },
+  );
+  return String(id ?? "");
 }
