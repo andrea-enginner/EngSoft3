@@ -1,17 +1,39 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChangeEvent,
   FormEvent,
+  startTransition,
+  useActionState,
   useEffect,
   useRef,
   useState,
 } from "react";
+import { publicarEmprestimoAction } from "@/controllers/publicar-emprestimo.actions";
+import type { UnidadeDuracao } from "@/models/entities/item";
 
 const MAX_FOTOS = 4;
 const MAX_TAMANHO_FOTO = 5 * 1024 * 1024;
+const MAX_VALOR_CENTAVOS = 2_147_483_647;
 const FORMATOS_ACEITOS = ["image/jpeg", "image/png", "image/webp"];
+const SUGESTOES_UNIDADE: Record<string, UnidadeDuracao> = {
+  ferramentas: "horas",
+  livros: "semanas",
+  eletronicos: "dias",
+  esporte: "dias",
+  casa: "dias",
+  outros: "dias",
+};
+const UNIDADES_SINGULAR: Record<UnidadeDuracao, string> = {
+  minutos: "minuto",
+  horas: "hora",
+  dias: "dia",
+  semanas: "semana",
+};
+const FORMATADOR_BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 type FotoSelecionada = {
   arquivo: File;
@@ -19,9 +41,15 @@ type FotoSelecionada = {
   url: string;
 };
 
-type ErrosFormulario = Partial<
-  Record<"fotos" | "titulo" | "categoria" | "condicao" | "descricao", string>
->;
+type ErrosFormulario = Partial<Record<"fotos" | "titulo" | "categoria" | "condicao" | "duracaoQuantidade" | "duracaoUnidade" | "valorUnitario" | "descricao", string>>;
+
+function converterValorEmCentavos(valor: string): number | null {
+  if (valor.length > 11) return null;
+  const partes = /^(\d+)(?:\.(\d{1,2}))?$/.exec(valor);
+  if (!partes) return null;
+  const centavos = BigInt(partes[1]) * BigInt(100) + BigInt((partes[2] ?? "").padEnd(2, "0") || "0");
+  return centavos >= BigInt(1) && centavos <= BigInt(MAX_VALOR_CENTAVOS) ? Number(centavos) : null;
+}
 
 function IconeCamera() {
   return (
@@ -51,10 +79,16 @@ function IconeUso() {
 }
 
 export function PublicarEmprestimoView() {
+  const router = useRouter();
+  const [resultado, executarPublicacao, enviando] = useActionState(publicarEmprestimoAction, { erro: "" });
   const [fotos, setFotos] = useState<FotoSelecionada[]>([]);
   const [titulo, setTitulo] = useState("");
   const [categoria, setCategoria] = useState("");
   const [condicao, setCondicao] = useState("");
+  const [valorUnitario, setValorUnitario] = useState("");
+  const [duracaoQuantidade, setDuracaoQuantidade] = useState("");
+  const [duracaoUnidade, setDuracaoUnidade] = useState<UnidadeDuracao | "">("");
+  const [unidadeAlteradaManualmente, setUnidadeAlteradaManualmente] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [erros, setErros] = useState<ErrosFormulario>({});
   const [status, setStatus] = useState("");
@@ -63,6 +97,9 @@ export function PublicarEmprestimoView() {
   const tituloRef = useRef<HTMLInputElement>(null);
   const categoriaRef = useRef<HTMLSelectElement>(null);
   const primeiraCondicaoRef = useRef<HTMLInputElement>(null);
+  const valorUnitarioRef = useRef<HTMLInputElement>(null);
+  const duracaoQuantidadeRef = useRef<HTMLInputElement>(null);
+  const duracaoUnidadeRef = useRef<HTMLSelectElement>(null);
   const descricaoRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -73,9 +110,29 @@ export function PublicarEmprestimoView() {
     return () => fotosRef.current.forEach((foto) => URL.revokeObjectURL(foto.url));
   }, []);
 
+  useEffect(() => {
+    if (!resultado.itemId) return;
+    fotosRef.current.forEach((foto) => URL.revokeObjectURL(foto.url));
+    router.push(`/itens/${resultado.itemId}`);
+  }, [resultado.itemId, router]);
+
   function limparErro(campo: keyof ErrosFormulario) {
     setErros((atuais) => ({ ...atuais, [campo]: undefined }));
     setStatus("");
+  }
+
+  function selecionarCategoria(novaCategoria: string) {
+    setCategoria(novaCategoria);
+    limparErro("categoria");
+    const sugestao = SUGESTOES_UNIDADE[novaCategoria];
+    if (sugestao && !unidadeAlteradaManualmente) {
+      setDuracaoUnidade(sugestao);
+      limparErro("duracaoUnidade");
+    }
+    if (sugestao && !duracaoQuantidade) {
+      setDuracaoQuantidade("1");
+      limparErro("duracaoQuantidade");
+    }
   }
 
   function selecionarFotos(event: ChangeEvent<HTMLInputElement>) {
@@ -126,6 +183,9 @@ export function PublicarEmprestimoView() {
       titulo: titulo.trim() ? undefined : "Informe o título do item.",
       categoria: categoria ? undefined : "Selecione uma categoria.",
       condicao: condicao ? undefined : "Selecione a condição do item.",
+      duracaoQuantidade: Number.isInteger(Number(duracaoQuantidade)) && Number(duracaoQuantidade) >= 1 && Number(duracaoQuantidade) <= 9999 ? undefined : "Informe uma quantidade entre 1 e 9999.",
+      duracaoUnidade: duracaoUnidade ? undefined : "Selecione uma unidade de duração.",
+      valorUnitario: converterValorEmCentavos(valorUnitario) === null ? "Informe um valor por unidade entre R$ 0,01 e R$ 21.474.836,47." : undefined,
       descricao: descricao.trim() ? undefined : "Descreva o item e as condições do empréstimo.",
     };
   }
@@ -142,6 +202,9 @@ export function PublicarEmprestimoView() {
         titulo: tituloRef.current,
         categoria: categoriaRef.current,
         condicao: primeiraCondicaoRef.current,
+        duracaoQuantidade: duracaoQuantidadeRef.current,
+        duracaoUnidade: duracaoUnidadeRef.current,
+        valorUnitario: valorUnitarioRef.current,
         descricao: descricaoRef.current,
       };
       focos[primeiroErro]?.focus();
@@ -149,24 +212,30 @@ export function PublicarEmprestimoView() {
       return;
     }
 
-    const emprestimo = {
-      tipo: "emprestimo" as const,
-      titulo: titulo.trim(),
-      categoria,
-      condicao,
-      descricao: descricao.trim(),
-      fotos: fotos.map((foto) => foto.arquivo),
-    };
-
-    void emprestimo;
-    setStatus("Empréstimo pronto. A publicação depende da integração com autenticação, Supabase e Storage.");
+    const dados = new FormData();
+    dados.set("titulo", titulo.trim());
+    dados.set("categoria", categoria);
+    dados.set("condicao", condicao);
+    dados.set("descricao", descricao.trim());
+    const valorUnitarioCentavos = converterValorEmCentavos(valorUnitario);
+    if (valorUnitarioCentavos === null) return;
+    dados.set("valorUnitarioCentavos", String(valorUnitarioCentavos));
+    dados.set("duracaoQuantidade", duracaoQuantidade);
+    dados.set("duracaoUnidade", duracaoUnidade);
+    fotos.forEach((foto) => dados.append("fotos", foto.arquivo));
+    setStatus("");
+    startTransition(() => executarPublicacao(dados));
   }
 
   const campoBase = "w-full rounded-xl border bg-surface px-4 py-3 text-base text-foreground outline-none placeholder:text-muted/80 focus:border-primary-500 focus:ring-2 focus:ring-primary-100";
+  const sugestaoUnidade = SUGESTOES_UNIDADE[categoria];
+  const quantidadeNumerica = Number(duracaoQuantidade);
+  const valorUnitarioCentavos = converterValorEmCentavos(valorUnitario);
+  const resumoDisponivel = duracaoUnidade && Number.isInteger(quantidadeNumerica) && quantidadeNumerica >= 1 && quantidadeNumerica <= 9999 && valorUnitarioCentavos !== null;
 
   return (
     <main className="min-h-full bg-background px-4 py-8 sm:px-6 sm:py-12">
-      <section className="mx-auto max-w-3xl rounded-2xl bg-surface px-5 py-8 shadow-[0_12px_35px_rgba(76,29,149,0.06)] sm:px-8 lg:px-10">
+      <section className="mx-auto max-w-3xl rounded-2xl border border-primary-100 bg-surface px-5 py-8 shadow-[0_16px_45px_rgba(76,29,149,0.08)] sm:px-8 lg:px-10">
         <h1 className="text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">O que você quer emprestar?</h1>
 
         <form className="mt-9 space-y-10" noValidate onSubmit={enviar}>
@@ -203,7 +272,7 @@ export function PublicarEmprestimoView() {
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
                 <label htmlFor="categoria" className="mb-2 block text-sm font-semibold">Categoria</label>
-                <select ref={categoriaRef} id="categoria" name="categoria" value={categoria} onChange={(event) => { setCategoria(event.target.value); limparErro("categoria"); }} aria-invalid={Boolean(erros.categoria)} aria-describedby={erros.categoria ? "erro-categoria" : undefined} className={`${campoBase} ${erros.categoria ? "border-red-600" : "border-primary-300"}`}>
+                <select ref={categoriaRef} id="categoria" name="categoria" value={categoria} onChange={(event) => selecionarCategoria(event.target.value)} aria-invalid={Boolean(erros.categoria)} aria-describedby={erros.categoria ? "erro-categoria" : undefined} className={`${campoBase} ${erros.categoria ? "border-red-600" : "border-primary-300"}`}>
                   <option value="">Selecione uma categoria...</option>
                   <option value="ferramentas">Ferramentas</option>
                   <option value="livros">Livros</option>
@@ -215,7 +284,54 @@ export function PublicarEmprestimoView() {
                 {erros.categoria && <p id="erro-categoria" className="mt-2 text-sm font-medium text-red-700">{erros.categoria}</p>}
               </div>
 
-              <fieldset aria-invalid={Boolean(erros.condicao)} aria-describedby={erros.condicao ? "erro-condicao" : undefined}>
+              <fieldset className="rounded-2xl border border-primary-100 bg-primary-50/40 p-4 sm:col-span-2" aria-describedby="ajuda-duracao">
+                <legend className="px-1 text-sm font-semibold">Duração do empréstimo</legend>
+                <p id="ajuda-duracao" className="mb-4 mt-1 text-xs text-muted">Defina por quanto tempo o item poderá ficar emprestado.</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="duracao-quantidade" className="mb-2 block text-sm font-medium">Quantidade</label>
+                    <input ref={duracaoQuantidadeRef} id="duracao-quantidade" name="duracaoQuantidade" type="number" inputMode="numeric" min="1" max="9999" step="1" value={duracaoQuantidade} onChange={(event) => { setDuracaoQuantidade(event.target.value); limparErro("duracaoQuantidade"); }} aria-invalid={Boolean(erros.duracaoQuantidade)} aria-describedby={erros.duracaoQuantidade ? "erro-duracao-quantidade ajuda-duracao" : "ajuda-duracao"} className={`${campoBase} ${erros.duracaoQuantidade ? "border-red-600" : "border-primary-300"}`} placeholder="Ex.: 2" />
+                    {erros.duracaoQuantidade && <p id="erro-duracao-quantidade" className="mt-2 text-sm font-medium text-red-700">{erros.duracaoQuantidade}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="duracao-unidade" className="mb-2 block text-sm font-medium">Unidade</label>
+                    <select ref={duracaoUnidadeRef} id="duracao-unidade" name="duracaoUnidade" value={duracaoUnidade} onChange={(event) => { setDuracaoUnidade(event.target.value as UnidadeDuracao | ""); setUnidadeAlteradaManualmente(Boolean(event.target.value)); limparErro("duracaoUnidade"); }} aria-invalid={Boolean(erros.duracaoUnidade)} aria-describedby={erros.duracaoUnidade ? "erro-duracao-unidade ajuda-duracao" : "ajuda-duracao"} className={`${campoBase} ${erros.duracaoUnidade ? "border-red-600" : "border-primary-300"}`}>
+                      <option value="">Selecione...</option>
+                      <option value="minutos">Minutos</option>
+                      <option value="horas">Horas</option>
+                      <option value="dias">Dias</option>
+                      <option value="semanas">Semanas</option>
+                    </select>
+                    {erros.duracaoUnidade && <p id="erro-duracao-unidade" className="mt-2 text-sm font-medium text-red-700">{erros.duracaoUnidade}</p>}
+                  </div>
+                </div>
+                {sugestaoUnidade && duracaoUnidade !== sugestaoUnidade ? (
+                  <button type="button" className="mt-3 text-sm font-medium text-primary-700 underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-500" onClick={() => { setDuracaoUnidade(sugestaoUnidade); setUnidadeAlteradaManualmente(false); if (!duracaoQuantidade) setDuracaoQuantidade("1"); limparErro("duracaoUnidade"); }}>
+                    Aplicar sugestão: {UNIDADES_SINGULAR[sugestaoUnidade]}
+                  </button>
+                ) : null}
+              </fieldset>
+
+              <div className="sm:col-span-2">
+                <label htmlFor="valor-unitario" className="mb-2 block text-sm font-semibold">Valor por {duracaoUnidade ? UNIDADES_SINGULAR[duracaoUnidade] : "unidade"}</label>
+                <div className="relative max-w-sm">
+                  <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">R$</span>
+                  <input ref={valorUnitarioRef} id="valor-unitario" name="valorUnitario" type="number" inputMode="decimal" min="0.01" max="21474836.47" step="0.01" value={valorUnitario} disabled={!duracaoUnidade} onChange={(event) => { setValorUnitario(event.target.value); limparErro("valorUnitario"); }} aria-invalid={Boolean(erros.valorUnitario)} aria-describedby={erros.valorUnitario ? "erro-valor-unitario" : "ajuda-valor-unitario"} className={`${campoBase} pl-12 disabled:cursor-not-allowed disabled:bg-soft disabled:opacity-70 ${erros.valorUnitario ? "border-red-600" : "border-primary-300"}`} placeholder={duracaoUnidade ? "0,00" : "Selecione a unidade primeiro"} />
+                </div>
+                <p id="ajuda-valor-unitario" className="mt-2 text-xs text-muted">Informe o preço de uma unidade do período escolhido.</p>
+                {erros.valorUnitario && <p id="erro-valor-unitario" className="mt-2 text-sm font-medium text-red-700">{erros.valorUnitario}</p>}
+              </div>
+
+              {resumoDisponivel && duracaoUnidade && valorUnitarioCentavos !== null ? (
+                <aside className="rounded-2xl border border-primary-200 bg-primary-50 p-4 sm:col-span-2" aria-live="polite">
+                  <p className="text-sm text-muted">
+                    {quantidadeNumerica} {quantidadeNumerica === 1 ? UNIDADES_SINGULAR[duracaoUnidade] : duracaoUnidade} × {FORMATADOR_BRL.format(valorUnitarioCentavos / 100)} por {UNIDADES_SINGULAR[duracaoUnidade]}
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-primary-700">Valor total: {FORMATADOR_BRL.format((quantidadeNumerica * valorUnitarioCentavos) / 100)}</p>
+                </aside>
+              ) : null}
+
+              <fieldset className="sm:col-span-2" aria-invalid={Boolean(erros.condicao)} aria-describedby={erros.condicao ? "erro-condicao" : undefined}>
                 <legend className="mb-2 text-sm font-semibold">Condição</legend>
                 <div className="grid grid-cols-2 gap-3">
                   <label className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 text-center text-sm transition focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2 ${condicao === "novo_quase_novo" ? "border-primary-700 bg-primary-50 text-primary-700 ring-1 ring-primary-700" : "border-primary-300 bg-surface text-muted hover:border-primary-500"}`}>
@@ -240,9 +356,10 @@ export function PublicarEmprestimoView() {
           </fieldset>
 
           <div className="border-t border-border pt-6">
-            <button type="submit" className="w-full rounded-xl bg-primary-700 px-5 py-4 font-semibold text-white shadow-sm hover:bg-primary-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">Publicar empréstimo</button>
+            <button type="submit" disabled={enviando} className="w-full rounded-xl bg-primary-700 px-5 py-4 font-semibold text-white shadow-sm hover:bg-primary-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60">{enviando ? "Publicando…" : "Publicar empréstimo"}</button>
             <p className="mt-4 text-center text-xs text-muted">Ao publicar, você concorda com nossos <span className="font-medium">Termos de Uso</span>.</p>
-            <p className={`mt-4 text-center text-sm font-medium ${status.startsWith("Empréstimo pronto") ? "text-primary-700" : "text-red-700"}`} role="status" aria-live="polite">{status}</p>
+            <p className="mt-4 text-center text-sm font-medium text-red-700" role="status" aria-live="polite">{status || resultado.erro}</p>
+            {resultado.erro.startsWith("Entre na sua conta") ? <p className="mt-2 text-center text-sm"><Link href="/login?retorno=/publicar" className="font-semibold text-primary-700 underline">Ir para o login</Link></p> : null}
           </div>
         </form>
       </section>

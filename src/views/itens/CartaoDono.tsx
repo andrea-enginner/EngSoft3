@@ -17,7 +17,7 @@ export function CartaoDono({ dono }: { dono: DonoItem }) {
       <h2 id="titulo-dono" className="mb-4 text-xs font-bold uppercase tracking-wide text-muted">Sobre o dono</h2>
       <div className="flex items-center gap-3">
         {dono.avatar ? (
-          <Image src={dono.avatar} alt={`Foto de ${dono.nome}`} width={48} height={48} className="h-12 w-12 rounded-full object-cover" />
+          <Image src={dono.avatar} alt={`Foto de ${dono.nome}`} width={48} height={48} className="h-12 w-12 rounded-full object-cover" unoptimized={dono.avatar.startsWith("http")} />
         ) : (
           <span aria-hidden="true" className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary-100 font-bold text-primary-700">
             {iniciais(dono.nome)}
@@ -25,11 +25,11 @@ export function CartaoDono({ dono }: { dono: DonoItem }) {
         )}
         <div>
           <p className="font-bold text-foreground">{dono.nome}</p>
-          <p className="mt-1 flex items-center gap-1 text-sm text-muted">
+          {dono.avaliacao > 0 ? <p className="mt-1 flex items-center gap-1 text-sm text-muted">
             <IconeEstrela className="h-4 w-4 text-estrela" />
             <strong className="font-semibold text-foreground">{dono.avaliacao.toFixed(1)}</strong>
-            <span>({dono.quantidadeEmprestimos} empréstimos)</span>
-          </p>
+            {dono.quantidadeEmprestimos > 0 ? <span>({dono.quantidadeEmprestimos} {dono.quantidadeEmprestimos === 1 ? "empréstimo" : "empréstimos"})</span> : null}
+          </p> : null}
         </div>
       </div>
       {dono.confiavel ? <p className="mt-4 flex items-center gap-2 text-sm font-medium text-primary-700"><span aria-hidden="true">♦</span>Membro confiável da comunidade</p> : null}

@@ -1,9 +1,8 @@
 /**
  * Utilitário sem regra de negócio: lê a sessão do usuário a partir dos cookies.
  *
- * Enquanto a autenticação não estiver implementada, `sessaoAtual()` devolve
- * `null` e a tela cai no modo demonstração — mesmo comportamento já adotado em
- * `emprestimo.repository.ts`.
+ * Este é o único ponto que precisará ser adaptado quando o fluxo de
+ * autenticação da aplicação for integrado.
  */
 
 import type { SessaoUsuario } from "@/models/entities/usuario";

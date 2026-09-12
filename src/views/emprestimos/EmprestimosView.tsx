@@ -1,7 +1,6 @@
-"use client";
-
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { formatarDuracao, formatarTarifa, formatarValor } from "@/lib/formatar-emprestimo";
 import type { Emprestimo, StatusEmprestimo } from "@/models/entities/emprestimo";
 import { createClient } from "@/lib/supabase/client";
 

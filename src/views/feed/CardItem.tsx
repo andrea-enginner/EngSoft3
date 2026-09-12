@@ -11,6 +11,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import type { AnuncioResumo } from "@/models/entities/item";
+import { formatarTarifa } from "@/lib/formatar-emprestimo";
 import {
   IconeCondicao,
   IconeCoracao,
@@ -20,19 +22,7 @@ import {
   IconeLocal,
 } from "@/views/comuns/Icones";
 
-export type TipoAnuncio = "doacao" | "emprestimo";
-
-export type ItemFeed = {
-  id: string;
-  tipo: TipoAnuncio;
-  titulo: string;
-  descricao: string;
-  condicao: string;
-  local: string;
-  imagem: string;
-  avaliacao?: number;
-  favorito?: boolean;
-};
+export type ItemFeed = AnuncioResumo;
 
 const ESTILO_TIPO = {
   doacao: {
@@ -56,9 +46,10 @@ export function CardItem({ item }: { item: ItemFeed }) {
       {/* Área da imagem */}
       <div className="relative h-36 overflow-hidden bg-soft">
         <Image
-          src={item.imagem}
+          src={item.imagem ?? "/file.svg"}
           alt={item.titulo}
           fill
+          unoptimized={item.imagem?.startsWith("http")}
           className="object-cover"
         />
         <span
@@ -68,16 +59,10 @@ export function CardItem({ item }: { item: ItemFeed }) {
           {tipo.rotulo}
         </span>
 
-        <span
-          className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full shadow-sm ${
-            item.favorito
-              ? "bg-red-500 text-white"
-              : "bg-white text-muted"
-          }`}
-        >
+        <span className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-muted shadow-sm">
           <IconeCoracao
             className="h-4 w-4"
-            preenchido={item.favorito}
+            preenchido={false}
           />
         </span>
       </div>
@@ -91,18 +76,20 @@ export function CardItem({ item }: { item: ItemFeed }) {
           {item.descricao}
         </p>
 
-        <div className="mt-4 flex items-center gap-2 text-[12px] text-muted">
+        {item.valorUnitarioCentavos && item.duracaoUnidade ? <p className="mt-3 font-semibold text-primary-700">{formatarTarifa(item.valorUnitarioCentavos, item.duracaoUnidade)}</p> : null}
+
+        {item.condicao !== "Não informada" ? <div className="mt-4 flex items-center gap-2 text-[12px] text-muted">
           <IconeCondicao className="h-4 w-4" />
           <span>
             Condição: <strong>{item.condicao}</strong>
           </span>
-        </div>
+        </div> : null}
 
         <div className="mt-auto flex items-center justify-between border-t border-border pt-3 text-[12px]">
-          <span className="flex items-center gap-1.5 text-primary-700">
+          {item.localizacao !== "Local não informado" ? <span className="flex items-center gap-1.5 text-primary-700">
             <IconeLocal className="h-4 w-4" />
-            {item.local}
-          </span>
+            {item.localizacao}
+          </span> : <span />}
 
           {item.avaliacao ? (
             <span className="flex items-center gap-1 font-medium text-muted">

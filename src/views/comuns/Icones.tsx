@@ -106,9 +106,10 @@ export function IconePerfil({ className }: PropsIcone) {
 
 export function IconeSino({ className }: PropsIcone) {
   return (
-    <svg {...BASE} className={className}>
-      <path d="M18 8a6 6 0 0 0-12 0c0 6-2 7-2 7h16s-2-1-2-7" />
-      <path d="M10.5 19a2 2 0 0 0 3 0" />
+    <svg {...BASE} className={className} strokeWidth={1.8}>
+      <path d="M18.2 10.1v2.4c0 1.7.5 3.3 1.5 4.7l.3.4H4l.3-.4a8.1 8.1 0 0 0 1.5-4.7v-2.4a6.2 6.2 0 0 1 12.4 0Z" />
+      <path d="M9.4 20a3 3 0 0 0 5.2 0" />
+      <path d="M10 4.2V3h4v1.2" />
     </svg>
   );
 }

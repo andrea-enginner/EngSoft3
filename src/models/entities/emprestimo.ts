@@ -5,7 +5,9 @@ export type Emprestimo = {
   conversaId?: string;
   nome: string;
   pessoa: string;
-  data: string;
+  inicioEm: string;
+  fimEm: string;
+  criadoEm: string;
   status: StatusEmprestimo;
   emoji: string;
   cor: string;
