@@ -36,7 +36,17 @@ function CartaoSolicitacao({ item }: { item: Emprestimo }) {
         <span>{formatarTarifa(item.valorUnitarioCentavos, item.duracaoUnidade)}</span>
         <strong className="text-primary-700">Total: {formatarValor(item.valorTotalCentavos)}</strong>
       </div>
-      {item.conversaId ? <Link href={`/mensagens/${item.conversaId}`} className="mt-3 inline-flex rounded-lg bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-100">Abrir conversa</Link> : null}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {item.conversaId ? <Link href={`/mensagens/${item.conversaId}`} className="inline-flex rounded-lg bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-100">Abrir conversa</Link> : null}
+        {item.status === "aceito" && (item.papel === "interessado" || item.statusPagamento === "aprovado") ? (
+          <Link
+            href={`/emprestimos/${item.id}/pagamento`}
+            className={`inline-flex rounded-lg px-3 py-2 text-xs font-semibold ${item.statusPagamento === "aprovado" ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "bg-primary-700 text-white hover:bg-primary-900"}`}
+          >
+            {item.statusPagamento === "aprovado" ? "Pagamento aprovado" : item.statusPagamento === "processando" ? "Ver pagamento" : "Simular pagamento"}
+          </Link>
+        ) : null}
+      </div>
     </div>
   </article>;
 }
