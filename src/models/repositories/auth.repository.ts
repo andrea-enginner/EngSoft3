@@ -44,3 +44,9 @@ export async function loginUsuario(
     password: senha,
   });
 }
+
+export async function logoutUsuario() {
+  const supabase = await createClient();
+
+  return await supabase.auth.signOut();
+}
