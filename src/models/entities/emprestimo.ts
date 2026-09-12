@@ -1,4 +1,5 @@
 import type { UnidadeDuracao } from "@/models/entities/item";
+import type { StatusPagamento } from "@/models/entities/pagamento";
 
 export type StatusEmprestimo =
   | "aguardando"
@@ -27,4 +28,5 @@ export type Emprestimo = {
   duracaoQuantidade: number;
   duracaoUnidade: UnidadeDuracao;
   imagem: string | null;
+  statusPagamento?: StatusPagamento;
 };
