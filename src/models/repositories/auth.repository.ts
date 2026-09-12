@@ -47,6 +47,5 @@ export async function loginUsuario(
 
 export async function logoutUsuario() {
   const supabase = await createClient();
-
   return await supabase.auth.signOut();
 }

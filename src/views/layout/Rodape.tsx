@@ -12,9 +12,12 @@ const LINKS = [
   { rotulo: "Meu perfil", href: "/perfil" },
 ];
 
-export function Rodape() {
+export function Rodape({ autenticado }: { autenticado: boolean }) {
   const pathname = usePathname();
   if (pathname === "/login" || pathname === "/cadastro") return null;
+  const links = autenticado
+    ? LINKS
+    : LINKS.filter(({ href }) => href === "/feed");
 
   return (
     <footer className="relative mt-16 overflow-hidden border-t border-primary-300/25 bg-[#7054b2] text-white">
@@ -33,13 +36,13 @@ export function Rodape() {
           </div>
           <nav aria-label="Navegação do rodapé">
             <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-primary-100/75">Explore</h2>
-            <ul className="mt-5 space-y-3">{LINKS.map(({ rotulo, href }) => <li key={href}><Link href={href} className="text-sm text-white/70 outline-none hover:text-white focus-visible:rounded focus-visible:ring-2 focus-visible:ring-primary-100">{rotulo}</Link></li>)}</ul>
+            <ul className="mt-5 space-y-3">{links.map(({ rotulo, href }) => <li key={href}><Link href={href} className="text-sm text-white/70 outline-none hover:text-white focus-visible:rounded focus-visible:ring-2 focus-visible:ring-primary-100">{rotulo}</Link></li>)}</ul>
           </nav>
           <section className="rounded-3xl border border-white/15 bg-white/[0.09] p-6 shadow-xl shadow-[#392567]/10 backdrop-blur-md sm:p-7">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary-100/80">Faça parte do movimento</p>
             <h2 className="mt-3 text-xl font-bold leading-snug sm:text-2xl">O que está parado pode voltar a circular.</h2>
-            <p className="mt-3 text-sm leading-6 text-white/65">Publique em poucos passos e encontre alguém perto de você.</p>
-            <Link href="/publicar" className="mt-6 inline-flex items-center rounded-xl bg-[#f8f7fc] px-5 py-3 text-sm font-bold text-[#4d2898] shadow-md shadow-[#392567]/10 outline-none hover:-translate-y-0.5 hover:bg-white focus-visible:ring-2 focus-visible:ring-primary-100 focus-visible:ring-offset-2 focus-visible:ring-offset-[#6545a8]">Publicar um item<span aria-hidden="true" className="ml-2 text-[#8c75bd]">→</span></Link>
+            <p className="mt-3 text-sm leading-6 text-white/65">{autenticado ? "Publique em poucos passos e encontre alguém perto de você." : "Entre para publicar, reservar itens e conversar com seus vizinhos."}</p>
+            <Link href={autenticado ? "/publicar" : "/cadastro"} className="mt-6 inline-flex items-center rounded-xl bg-[#f8f7fc] px-5 py-3 text-sm font-bold text-[#4d2898] shadow-md shadow-[#392567]/10 outline-none hover:-translate-y-0.5 hover:bg-white focus-visible:ring-2 focus-visible:ring-primary-100 focus-visible:ring-offset-2 focus-visible:ring-offset-[#6545a8]">{autenticado ? "Publicar um item" : "Criar minha conta"}<span aria-hidden="true" className="ml-2 text-[#8c75bd]">→</span></Link>
           </section>
         </div>
         <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between"><p>© {new Date().getFullYear()} Ciclo. Feito para circular.</p><p>Compartilhe mais. Desperdice menos.</p></div>

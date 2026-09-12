@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { carregarItemDetalhe } from "@/controllers/item-detalhe.controller";
+import { sessaoAtual } from "@/lib/supabase/sessao";
 import { DetalheItemView } from "@/views/itens/DetalheItemView";
 
 export default async function PaginaDetalheItem({ params }: PageProps<"/itens/[id]">) {
@@ -8,5 +9,5 @@ export default async function PaginaDetalheItem({ params }: PageProps<"/itens/[i
 
   if (!item) notFound();
 
-  return <DetalheItemView item={item} />;
+  return <DetalheItemView item={item} autenticado={Boolean(await sessaoAtual())} />;
 }

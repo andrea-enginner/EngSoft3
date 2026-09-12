@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { loginAction } from "@/controllers/auth.actions";
 
-export function LoginForm() {
+export function LoginForm({ proximaRota = "/feed" }: { proximaRota?: string }) {
   return (
     <div className="w-full max-w-[448px]">
 
@@ -38,6 +38,7 @@ export function LoginForm() {
       </div>
 
       <form action={loginAction} className="flex flex-col">
+        <input type="hidden" name="next" value={proximaRota} />
 
         {/* E-mail */}
         <div className="flex flex-col gap-2">

@@ -8,14 +8,16 @@
 import type { SessaoUsuario } from "@/models/entities/usuario";
 import { createClient } from "@/lib/supabase/server";
 import { credenciaisSupabase } from "@/lib/supabase/rest";
+import { cache } from "react";
 
-export async function sessaoAtual(): Promise<SessaoUsuario | null> {
+export const sessaoAtual = cache(async (): Promise<SessaoUsuario | null> => {
   if (!credenciaisSupabase()) return null;
 
   try {
     const supabase = await createClient();
-    const [{ data: dadosUsuario, error: erroUsuario }, { data: dadosSessao }] =
-      await Promise.all([supabase.auth.getUser(), supabase.auth.getSession()]);
+    const { data: dadosUsuario, error: erroUsuario } =
+      await supabase.auth.getUser();
+    const { data: dadosSessao } = await supabase.auth.getSession();
     const usuario = dadosUsuario.user;
     const sessao = dadosSessao.session;
     if (erroUsuario || !usuario || !sessao?.access_token) return null;
@@ -28,4 +30,4 @@ export async function sessaoAtual(): Promise<SessaoUsuario | null> {
   } catch {
     return null;
   }
-}
+});

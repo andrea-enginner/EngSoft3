@@ -11,6 +11,7 @@ import "./globals.css";
 
 import { Cabecalho } from "@/views/layout/Cabecalho";
 import { Rodape } from "@/views/layout/Rodape";
+import { sessaoAtual } from "@/lib/supabase/sessao";
 
 export const metadata: Metadata = {
   title: {
@@ -20,13 +21,15 @@ export const metadata: Metadata = {
   description: "Plataforma de doação e empréstimo de itens entre vizinhos",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const autenticado = Boolean(await sessaoAtual());
+
   return (
     <html lang="pt-BR" className="h-full antialiased">
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        <Cabecalho />
+        <Cabecalho autenticado={autenticado} />
         <div className="flex-1">{children}</div>
-        <Rodape />
+        <Rodape autenticado={autenticado} />
       </body>
     </html>
   );
