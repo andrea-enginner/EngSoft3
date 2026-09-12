@@ -8,7 +8,8 @@ const DEMONSTRACAO: AnuncioDetalhe[] = [
   ["4", "emprestimo", "Barraca de Camping 4 Pessoas", "Disponível para empréstimo aos finais de semana. Ideal para trilhas e acampamentos.", "Excelente", "Butantã, SP", "/itens/acampar_lindo.jpg", "Marina Souza"],
 ].map(([id, tipo, titulo, descricao, condicao, localizacao, imagem, nome], indice) => ({
   id, tipo: tipo as TipoAnuncio, titulo, descricao, condicao, localizacao,
-  imagem, imagens: [imagem], valorUnitarioCentavos: tipo === "emprestimo" ? 2500 : null,
+  imagem, imagens: [imagem], categoria: tipo === "emprestimo" ? "Livros e lazer" : null,
+  valorUnitarioCentavos: tipo === "emprestimo" ? 2500 : null,
   duracaoQuantidade: tipo === "emprestimo" ? 1 : null,
   duracaoUnidade: tipo === "emprestimo" ? "semanas" : null,
   publicadoEm: new Date(Date.now() - (indice + 2) * 86_400_000).toISOString(), ativo: true,
@@ -17,7 +18,7 @@ const DEMONSTRACAO: AnuncioDetalhe[] = [
 }));
 
 type RegistroPublico = {
-  id: string; tipo: string; titulo: string; descricao: string; condicao: string | null;
+  id: string; tipo: string; titulo: string; descricao: string; categoria: string | null; condicao: string | null;
   valor_unitario_centavos: number | null; duracao_quantidade: number | null; duracao_unidade: string | null;
   criado_em: string; usuario_id: string; dono_nome: string;
   dono_avatar: string | null; cidade: string | null; estado: string | null;
@@ -32,16 +33,18 @@ function urlImagem(caminho: string): string {
 function normalizar(registro: RegistroPublico): AnuncioDetalhe {
   const imagens = (registro.imagens ?? []).map(urlImagem);
   const avaliacao = Number(registro.avaliacao) || 0;
+  const categorias: Record<string, string> = { ferramentas: "Ferramentas", livros: "Livros", eletronicos: "Eletrônicos", esporte: "Esporte", casa: "Casa", outros: "Outros" };
   return {
     id: registro.id, tipo: registro.tipo === "doacao" ? "doacao" : "emprestimo",
     titulo: registro.titulo, descricao: registro.descricao,
+    categoria: registro.categoria ? categorias[registro.categoria] ?? registro.categoria : null,
     condicao: registro.condicao === "novo_quase_novo" ? "Novo/Quase novo" : registro.condicao === "marcas_de_uso" ? "Com marcas de uso" : "Não informada",
     localizacao: [registro.cidade, registro.estado].filter(Boolean).join(", ") || "Local não informado",
     imagem: imagens[0] ?? null, imagens, valorUnitarioCentavos: registro.valor_unitario_centavos,
     duracaoQuantidade: registro.duracao_quantidade,
     duracaoUnidade: ["minutos", "horas", "dias", "semanas"].includes(registro.duracao_unidade ?? "")
       ? registro.duracao_unidade as AnuncioDetalhe["duracaoUnidade"] : null,
-    publicadoEm: registro.criado_em, ativo: true, avaliacao, aceitaPropostas: true,
+    publicadoEm: registro.criado_em, ativo: true, avaliacao, aceitaPropostas: false,
     dono: { id: registro.usuario_id, nome: registro.dono_nome, avatar: registro.dono_avatar ?? undefined, avaliacao, quantidadeEmprestimos: 0, confiavel: avaliacao >= 4.5 },
   };
 }

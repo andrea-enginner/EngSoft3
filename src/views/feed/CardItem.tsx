@@ -12,6 +12,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { AnuncioResumo } from "@/models/entities/item";
+import { formatarTarifa } from "@/lib/formatar-emprestimo";
 import {
   IconeCondicao,
   IconeCoracao,
@@ -75,20 +76,20 @@ export function CardItem({ item }: { item: ItemFeed }) {
           {item.descricao}
         </p>
 
-        {item.valorUnitarioCentavos ? <p className="mt-3 font-semibold text-primary-700">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(item.valorUnitarioCentavos / 100)}</p> : null}
+        {item.valorUnitarioCentavos && item.duracaoUnidade ? <p className="mt-3 font-semibold text-primary-700">{formatarTarifa(item.valorUnitarioCentavos, item.duracaoUnidade)}</p> : null}
 
-        <div className="mt-4 flex items-center gap-2 text-[12px] text-muted">
+        {item.condicao !== "Não informada" ? <div className="mt-4 flex items-center gap-2 text-[12px] text-muted">
           <IconeCondicao className="h-4 w-4" />
           <span>
             Condição: <strong>{item.condicao}</strong>
           </span>
-        </div>
+        </div> : null}
 
         <div className="mt-auto flex items-center justify-between border-t border-border pt-3 text-[12px]">
-          <span className="flex items-center gap-1.5 text-primary-700">
+          {item.localizacao !== "Local não informado" ? <span className="flex items-center gap-1.5 text-primary-700">
             <IconeLocal className="h-4 w-4" />
             {item.localizacao}
-          </span>
+          </span> : <span />}
 
           {item.avaliacao ? (
             <span className="flex items-center gap-1 font-medium text-muted">

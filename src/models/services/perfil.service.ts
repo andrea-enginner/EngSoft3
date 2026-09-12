@@ -33,9 +33,9 @@ export class DadosInvalidosError extends Error {}
  * vez de quebrar a página — inclusive para um perfil novo, que ainda não tem
  * nenhum empréstimo.
  */
-async function buscarEmprestimos(): Promise<Emprestimo[]> {
+async function buscarEmprestimos(sessao: SessaoUsuario | null): Promise<Emprestimo[]> {
   try {
-    const { dados } = await listarMeusEmprestimos();
+    const { dados } = await listarMeusEmprestimos(sessao);
     return dados;
   } catch {
     return [];
@@ -66,7 +66,7 @@ export async function carregarPerfil(sessao: SessaoUsuario | null): Promise<Perf
     buscarUsuario(sessao),
     buscarAnunciosDoUsuario(sessao),
     buscarAvaliacoesDoUsuario(sessao),
-    buscarEmprestimos(),
+    buscarEmprestimos(sessao),
   ]);
 
   const historico = montarHistorico(emprestimos);

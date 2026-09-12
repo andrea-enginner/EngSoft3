@@ -7,6 +7,7 @@ export type AnuncioResumo = {
   tipo: TipoAnuncio;
   titulo: string;
   descricao: string;
+  categoria: string | null;
   condicao: string;
   localizacao: string;
   imagem: string | null;
