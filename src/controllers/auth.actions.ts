@@ -1,0 +1,46 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import {
+  cadastrar,
+  login,
+} from "@/models/services/auth.service";
+
+export async function loginAction(formData: FormData) {
+  const email = formData.get("email")?.toString() ?? "";
+  const senha = formData.get("senha")?.toString() ?? "";
+
+  await login(email, senha);
+
+  redirect("/feed");
+}
+
+export async function cadastrarAction(formData: FormData) {
+  const nome = formData.get("nome")?.toString() ?? "";
+  const email = formData.get("email")?.toString() ?? "";
+  const cpf = formData.get("cpf")?.toString() ?? "";
+  const dataNascimento =
+    formData.get("dataNascimento")?.toString() ?? "";
+  const telefone = formData.get("telefone")?.toString() ?? "";
+  const cep = formData.get("cep")?.toString() ?? "";
+  const cidade = formData.get("cidade")?.toString() ?? "";
+  const estado = formData.get("estado")?.toString() ?? "";
+  const senha = formData.get("senha")?.toString() ?? "";
+  const confirmarSenha =
+    formData.get("confirmarSenha")?.toString() ?? "";
+
+  await cadastrar({
+    nome,
+    email,
+    cpf,
+    dataNascimento,
+    telefone,
+    cep,
+    cidade,
+    estado,
+    senha,
+    confirmarSenha,
+  });
+
+  redirect("/feed");
+}
