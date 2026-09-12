@@ -1,11 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { MouseEvent, useActionState, useId, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
-import { solicitarEmprestimoAction } from "@/controllers/solicitar-emprestimo.actions";
-import { calcularTotal, formatarDuracao, formatarTarifa, formatarValor } from "@/lib/formatar-emprestimo";
-import type { UnidadeDuracao } from "@/models/entities/item";
+import { FormEvent, MouseEvent, useId, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { iniciarConversaAction } from "@/controllers/mensagem.actions";
 import { IconeCoracao } from "@/views/comuns/Icones";
 
 type Props = {
@@ -18,10 +15,20 @@ type Props = {
   condicao?: string;
 };
 
-function BotaoConfirmar() {
-  const { pending } = useFormStatus();
-  return <button type="submit" disabled={pending} className="mt-5 w-full rounded-xl bg-primary-700 px-5 py-3 font-semibold text-white transition hover:bg-primary-900 disabled:cursor-wait disabled:opacity-60">{pending ? "Enviando..." : "Enviar solicitação"}</button>;
-}
+export function ModalInteresse({ anuncioId, nomeDono, tituloItem }: Props) {
+  const router = useRouter();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const botaoAbrirRef = useRef<HTMLButtonElement>(null);
+  const idBase = useId();
+  const idTitulo = `${idBase}-titulo`;
+  const idMensagem = `${idBase}-mensagem`;
+  const idContador = `${idBase}-contador`;
+  const idErro = `${idBase}-erro`;
+  const idAviso = `${idBase}-aviso`;
+  const [mensagem, setMensagem] = useState(`Olá ${nomeDono}, tenho interesse em ${tituloItem}. Como podemos combinar?`);
+  const [erro, setErro] = useState("");
+  const [aviso, setAviso] = useState("");
+  const [enviando, iniciarEnvio] = useTransition();
 
 const SEGUNDOS_POR_UNIDADE: Record<UnidadeDuracao, number> = {
   minutos: 60,
@@ -59,9 +66,31 @@ export function ModalInteresse({ anuncioId, nomeDono, tituloItem, valorUnitarioC
     if (evento.target === evento.currentTarget) dialogRef.current?.close();
   }
 
-  function abrir() {
-    setInicioMinimo(dataHoraLocal(new Date(Date.now() + 60_000)));
-    dialogRef.current?.showModal();
+  function enviar(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+    const mensagemNormalizada = mensagem.trim();
+    if (!mensagemNormalizada) {
+      setErro("Escreva uma mensagem antes de continuar.");
+      setAviso("");
+      return;
+    }
+    if (mensagemNormalizada.length > LIMITE_MENSAGEM) {
+      setErro(`A mensagem deve ter no máximo ${LIMITE_MENSAGEM} caracteres.`);
+      setAviso("");
+      return;
+    }
+
+    setErro("");
+    setAviso("");
+    iniciarEnvio(async () => {
+      const resultado = await iniciarConversaAction(anuncioId, mensagemNormalizada);
+      if (!resultado.sucesso) {
+        setErro(resultado.erro);
+        return;
+      }
+      setAviso("Conversa iniciada. Abrindo mensagens...");
+      router.push(`/mensagens/${resultado.conversaId}`);
+    });
   }
 
   return <>
@@ -90,21 +119,10 @@ export function ModalInteresse({ anuncioId, nomeDono, tituloItem, valorUnitarioC
           </dl>
         </section>
 
-        {estado.sucesso ? <div role="status" className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800"><p className="font-semibold">Solicitação enviada.</p><p className="mt-1">Acompanhe o andamento na tela de empréstimos.</p><Link href="/emprestimos" className="mt-3 inline-block font-semibold underline">Ver minhas solicitações</Link></div> : <>
-          <div className="mt-5">
-            <label htmlFor={`${idTitulo}-inicio`} className="block text-sm font-semibold">Data e hora de início</label>
-            <input id={`${idTitulo}-inicio`} type="datetime-local" required min={inicioMinimo} value={inicioLocal} onChange={(evento) => setInicioLocal(evento.target.value)} autoFocus className="mt-2 w-full rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100" />
-            {fim ? <p className="mt-2 rounded-lg bg-soft px-3 py-2 text-sm text-muted">Término previsto: <strong className="text-foreground">{formatarDataHora(fim)}</strong></p> : <p className="mt-2 text-xs text-muted">O término será calculado automaticamente.</p>}
-          </div>
-          <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 text-sm">
-            <input type="checkbox" name="confirmacao" required className="mt-0.5 h-4 w-4 accent-primary-700" />
-            <span>Confirmo que revisei o início, o período, o valor e as condições da reserva.</span>
-          </label>
-          {estado.erro ? <p role="alert" className="mt-3 text-sm font-medium text-red-700">{estado.erro}</p> : null}
-          <BotaoConfirmar />
-        </>}
-        <button type="button" onClick={() => dialogRef.current?.close()} className="mt-2 w-full rounded-lg px-5 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50">{estado.sucesso ? "Fechar" : "Cancelar"}</button>
-      </form>
-    </dialog>
-  </>;
+          <button type="submit" disabled={enviando} className="mt-5 w-full rounded-lg bg-primary-700 px-5 py-3 font-semibold text-white hover:bg-primary-900 disabled:cursor-wait disabled:opacity-60">{enviando ? "Enviando..." : "Enviar mensagem"}</button>
+          <button type="button" disabled={enviando} onClick={fechar} className="mt-2 w-full rounded-lg px-5 py-2 text-sm font-semibold text-primary-700 hover:bg-primary-50 disabled:opacity-50">Cancelar</button>
+        </form>
+      </dialog>
+    </>
+  );
 }

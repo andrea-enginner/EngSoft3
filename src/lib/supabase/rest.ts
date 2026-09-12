@@ -89,3 +89,30 @@ export async function atualizarSupabase(
     throw new Error(`Supabase respondeu com status ${resposta.status}.`);
   }
 }
+
+/** Executa uma função Postgres exposta pelo Supabase e devolve seu JSON. */
+export async function executarRpcSupabase<T>(
+  funcao: string,
+  token: string,
+  corpo: Record<string, unknown> = {},
+): Promise<T> {
+  const credenciais = credenciaisSupabase();
+  if (!credenciais) {
+    throw new Error("Supabase não está configurado neste ambiente.");
+  }
+
+  const resposta = await fetch(`${credenciais.url}/rest/v1/rpc/${funcao}`, {
+    method: "POST",
+    headers: cabecalhos(credenciais, token),
+    body: JSON.stringify(corpo),
+    cache: "no-store",
+  });
+
+  if (!resposta.ok) {
+    const detalhe = (await resposta.json().catch(() => null)) as { message?: string } | null;
+    throw new Error(detalhe?.message ?? `Supabase respondeu com status ${resposta.status}.`);
+  }
+
+  if (resposta.status === 204) return undefined as T;
+  return (await resposta.json()) as T;
+}

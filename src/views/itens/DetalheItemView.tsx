@@ -50,9 +50,11 @@ export function DetalheItemView({ item }: { item: ItemDetalhe }) {
           </section>
 
           <CartaoDono dono={item.dono} />
-          {termos ? <section aria-label="Solicitar reserva">
-            <ModalInteresse anuncioId={item.id} nomeDono={item.dono.nome} tituloItem={item.titulo} valorUnitarioCentavos={termos.valor} duracaoQuantidade={termos.quantidade} duracaoUnidade={termos.unidade} condicao={item.condicao !== "Não informada" ? item.condicao : undefined} />
-          </section> : item.tipo === "emprestimo" ? <p className="rounded-xl border border-border bg-soft p-4 text-center text-sm text-muted">As condições desta reserva ainda não foram informadas.</p> : null}
+          {item.tipo === "emprestimo" ? (
+            <section aria-label="Demonstrar interesse">
+              <ModalInteresse anuncioId={item.id} nomeDono={item.dono.nome} tituloItem={item.titulo} />
+            </section>
+          ) : null}
         </div>
       </div>
     </main>
