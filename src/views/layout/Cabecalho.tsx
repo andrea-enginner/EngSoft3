@@ -20,9 +20,7 @@ const NAVEGACAO = [
 ];
 
 function rotaEstaAtiva(pathname: string, href: string) {
-  return href === "/"
-    ? pathname === href
-    : pathname === href || pathname.startsWith(`${href}/`);
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 type Perfil = {
@@ -91,7 +89,6 @@ export function Cabecalho() {
   return (
     <header className="sticky top-0 z-50 border-b border-primary-100/80 bg-surface/90 shadow-[0_10px_30px_-26px_rgba(76,29,149,0.65)] backdrop-blur-xl">
       <div className="mx-auto flex h-[72px] max-w-7xl items-center gap-5 px-5 sm:px-8">
-        {/* Logo */}
         <Link
           href="/feed"
           aria-label="Ciclo — início"
@@ -111,7 +108,6 @@ export function Cabecalho() {
           </span>
         </Link>
 
-        {/* Navegação */}
         <nav
           className="hidden flex-1 justify-center lg:flex"
           aria-label="Navegação principal"
@@ -139,9 +135,7 @@ export function Cabecalho() {
           </ul>
         </nav>
 
-        {/* Área direita */}
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
-          {/* Notificações */}
           <span
             role="img"
             aria-label="Notificações"
@@ -153,7 +147,6 @@ export function Cabecalho() {
             <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full bg-accent ring-2 ring-surface" />
           </span>
 
-          {/* Mensagens */}
           <Link
             href="/mensagens"
             aria-label="Mensagens"
@@ -169,32 +162,12 @@ export function Cabecalho() {
 
           <span className="mx-1 hidden h-6 w-px bg-border xl:block" />
 
-          {/* Usuário */}
           {usuarioLogado ? (
             <div className="relative ml-1 flex items-center gap-1">
-              {/* Foto / avatar */}
               <Link
                 href="/perfil"
                 aria-label="Ir para meu perfil"
-                className="
-                  flex
-                  h-10
-                  w-10
-                  items-center
-                  justify-center
-                  overflow-hidden
-                  rounded-full
-                  bg-primary-100
-                  text-sm
-                  font-bold
-                  text-primary-700
-                  outline-none
-                  ring-2
-                  ring-transparent
-                  transition
-                  hover:ring-primary-300
-                  focus-visible:ring-primary-500
-                "
+                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary-100 text-sm font-bold text-primary-700 outline-none ring-2 ring-transparent transition hover:ring-primary-300 focus-visible:ring-primary-500"
               >
                 {perfil?.avatar_url ? (
                   <Image
@@ -213,7 +186,6 @@ export function Cabecalho() {
                 )}
               </Link>
 
-              {/* Setinha */}
               <button
                 type="button"
                 aria-label="Abrir menu do perfil"
@@ -221,18 +193,7 @@ export function Cabecalho() {
                 onClick={() =>
                   setMenuAberto((aberto) => !aberto)
                 }
-                className="
-                  flex
-                  h-9
-                  w-7
-                  items-center
-                  justify-center
-                  rounded-lg
-                  text-muted
-                  transition
-                  hover:bg-primary-50
-                  hover:text-primary-700
-                "
+                className="flex h-9 w-7 items-center justify-center rounded-lg text-muted transition hover:bg-primary-50 hover:text-primary-700"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -248,39 +209,12 @@ export function Cabecalho() {
                 </svg>
               </button>
 
-              {/* Dropdown */}
               {menuAberto && (
-                <div
-                  className="
-                    absolute
-                    right-0
-                    top-12
-                    z-50
-                    w-44
-                    overflow-hidden
-                    rounded-xl
-                    border
-                    border-border
-                    bg-white
-                    py-1.5
-                    shadow-lg
-                  "
-                >
+                <div className="absolute right-0 top-12 z-50 w-44 overflow-hidden rounded-xl border border-border bg-white py-1.5 shadow-lg">
                   <Link
                     href="/perfil"
                     onClick={() => setMenuAberto(false)}
-                    className="
-                      flex
-                      w-full
-                      items-center
-                      px-4
-                      py-2.5
-                      text-sm
-                      font-medium
-                      text-[#29252f]
-                      hover:bg-primary-50
-                      hover:text-primary-700
-                    "
+                    className="flex w-full items-center px-4 py-2.5 text-sm font-medium text-[#29252f] hover:bg-primary-50 hover:text-primary-700"
                   >
                     Meu perfil
                   </Link>
@@ -290,18 +224,7 @@ export function Cabecalho() {
                   <form action={logoutAction}>
                     <button
                       type="submit"
-                      className="
-                        flex
-                        w-full
-                        items-center
-                        px-4
-                        py-2.5
-                        text-left
-                        text-sm
-                        font-medium
-                        text-red-600
-                        hover:bg-red-50
-                      "
+                      className="flex w-full items-center px-4 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50"
                     >
                       Sair
                     </button>

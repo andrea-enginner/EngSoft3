@@ -1,11 +1,20 @@
 import type { UnidadeDuracao } from "@/models/entities/item";
 
-export type StatusEmprestimo = "andamento" | "devolucao" | "concluido" | "aguardando" | "negociacao" | "recusado";
+export type StatusEmprestimo =
+  | "aguardando"
+  | "aceito"
+  | "negociacao"
+  | "andamento"
+  | "devolucao"
+  | "concluido"
+  | "recusado";
+
 export type PapelEmprestimo = "dono" | "interessado";
 
 export type Emprestimo = {
   id: string;
   anuncioId: string;
+  conversaId?: string;
   papel: PapelEmprestimo;
   nome: string;
   pessoa: string;

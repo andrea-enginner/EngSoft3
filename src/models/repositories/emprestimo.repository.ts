@@ -1,24 +1,47 @@
-import { credenciaisSupabase, executarRpc, urlPublicaStorage } from "@/lib/supabase/rest";
+import { credenciaisSupabase, executarRpc, executarRpcSupabase, urlPublicaStorage } from "@/lib/supabase/rest";
 import type { Emprestimo, PapelEmprestimo, StatusEmprestimo } from "@/models/entities/emprestimo";
 import type { UnidadeDuracao } from "@/models/entities/item";
 import type { SessaoUsuario } from "@/models/entities/usuario";
 
 const DEMONSTRACAO: Emprestimo[] = [{
-  id: "demo-emprestimo", anuncioId: "2", papel: "interessado", nome: "Livro: O Design do Dia a Dia",
-  pessoa: "Lucas Martins", inicioEm: new Date(Date.now() + 86_400_000).toISOString(),
-  fimEm: new Date(Date.now() + 16 * 86_400_000).toISOString(), criadoEm: new Date().toISOString(), status: "aguardando",
-  valorUnitarioCentavos: 2500, valorTotalCentavos: 37500, duracaoQuantidade: 15, duracaoUnidade: "dias",
+  id: "demo-emprestimo",
+  anuncioId: "2",
+  conversaId: "demo-solicitado",
+  papel: "interessado",
+  nome: "Livro: O Design do Dia a Dia",
+  pessoa: "Lucas Martins",
+  inicioEm: new Date(Date.now() + 86_400_000).toISOString(),
+  fimEm: new Date(Date.now() + 16 * 86_400_000).toISOString(),
+  criadoEm: new Date().toISOString(),
+  status: "aguardando",
+  valorUnitarioCentavos: 2500,
+  valorTotalCentavos: 37500,
+  duracaoQuantidade: 15,
+  duracaoUnidade: "dias",
   imagem: "/itens/livro_legal.jpg",
 }];
 
 type RegistroEmprestimo = {
-  id: string; anuncio_id: string; papel: string; titulo: string; pessoa: string;
-  inicio_em: string; fim_em: string; criado_em: string; status: string;
-  valor_unitario_centavos: number; valor_total_centavos: number; duracao_quantidade: number;
-  duracao_unidade: string; imagem: string | null;
+  id: string;
+  anuncio_id: string;
+  conversa_id: string | null;
+  papel: string;
+  titulo: string;
+  pessoa: string;
+  inicio_em: string;
+  fim_em: string;
+  criado_em: string;
+  status: string;
+  valor_unitario_centavos: number;
+  valor_total_centavos: number;
+  duracao_quantidade: number;
+  duracao_unidade: string;
+  imagem: string | null;
 };
 
-const STATUS: StatusEmprestimo[] = ["andamento", "devolucao", "concluido", "aguardando", "negociacao", "recusado"];
+const STATUS: StatusEmprestimo[] = [
+  "aguardando", "aceito", "negociacao", "andamento", "devolucao", "concluido", "recusado",
+];
 const UNIDADES: UnidadeDuracao[] = ["minutos", "horas", "dias", "semanas"];
 
 function normalizar(registro: RegistroEmprestimo): Emprestimo {
@@ -26,32 +49,55 @@ function normalizar(registro: RegistroEmprestimo): Emprestimo {
   return {
     id: registro.id,
     anuncioId: registro.anuncio_id,
+    conversaId: registro.conversa_id ?? undefined,
     papel: (registro.papel === "dono" ? "dono" : "interessado") as PapelEmprestimo,
     nome: registro.titulo,
     pessoa: registro.pessoa,
     inicioEm: registro.inicio_em,
     fimEm: registro.fim_em,
     criadoEm: registro.criado_em,
-    status: STATUS.includes(registro.status as StatusEmprestimo) ? registro.status as StatusEmprestimo : "aguardando",
+    status: STATUS.includes(registro.status as StatusEmprestimo)
+      ? registro.status as StatusEmprestimo
+      : "aguardando",
     valorUnitarioCentavos: registro.valor_unitario_centavos,
     valorTotalCentavos: registro.valor_total_centavos,
     duracaoQuantidade: registro.duracao_quantidade,
-    duracaoUnidade: UNIDADES.includes(registro.duracao_unidade as UnidadeDuracao) ? registro.duracao_unidade as UnidadeDuracao : "dias",
-    imagem: imagem ? (imagem.startsWith("http") || imagem.startsWith("/") ? imagem : urlPublicaStorage("anuncios", imagem)) : null,
+    duracaoUnidade: UNIDADES.includes(registro.duracao_unidade as UnidadeDuracao)
+      ? registro.duracao_unidade as UnidadeDuracao
+      : "dias",
+    imagem: imagem
+      ? (imagem.startsWith("http") || imagem.startsWith("/") ? imagem : urlPublicaStorage("anuncios", imagem))
+      : null,
   };
 }
 
-export type ResultadoEmprestimos = { dados: Emprestimo[]; fonte: "supabase" | "demonstracao"; requerLogin: boolean };
+export type ResultadoEmprestimos = {
+  dados: Emprestimo[];
+  fonte: "supabase" | "demonstracao";
+  requerLogin: boolean;
+};
 
 export async function buscarMeusEmprestimos(sessao: SessaoUsuario | null): Promise<ResultadoEmprestimos> {
   if (!credenciaisSupabase()) return { dados: DEMONSTRACAO, fonte: "demonstracao", requerLogin: false };
   if (!sessao) return { dados: [], fonte: "supabase", requerLogin: true };
 
-  const registros = await executarRpc<RegistroEmprestimo>("listar_minhas_solicitacoes_emprestimo", {}, sessao.token);
+  const registros = await executarRpc<RegistroEmprestimo>(
+    "listar_minhas_solicitacoes_emprestimo",
+    {},
+    sessao.token,
+  );
   return { dados: (registros ?? []).map(normalizar), fonte: "supabase", requerLogin: false };
 }
 
-export async function criarSolicitacaoEmprestimo(sessao: SessaoUsuario, anuncioId: string, inicioEm: string): Promise<string> {
-  const dados = await executarRpc<string>("solicitar_reserva", { p_anuncio_id: anuncioId, p_inicio_em: inicioEm }, sessao.token);
-  return String(dados ?? "");
+export async function criarSolicitacaoEmprestimo(
+  sessao: SessaoUsuario,
+  anuncioId: string,
+  inicioEm: string,
+): Promise<string> {
+  const id = await executarRpcSupabase<string>(
+    "solicitar_reserva",
+    sessao.token,
+    { p_anuncio_id: anuncioId, p_inicio_em: inicioEm },
+  );
+  return String(id ?? "");
 }
