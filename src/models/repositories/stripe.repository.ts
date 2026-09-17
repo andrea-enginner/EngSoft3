@@ -7,11 +7,31 @@ type StripeErro = {
 export type StripeCheckoutSession = {
   id: string;
   url: string | null;
+  mode?: "payment" | "setup" | "subscription";
   status: "open" | "complete" | "expired" | null;
   payment_status: "paid" | "unpaid" | "no_payment_required";
   payment_intent: string | null;
+  customer?: string | null;
+  subscription?: string | null;
   client_reference_id: string | null;
   metadata: Record<string, string>;
+};
+
+export type StripeAssinatura = {
+  id: string;
+  customer: string;
+  status: string;
+  cancel_at_period_end: boolean;
+  current_period_start?: number;
+  current_period_end?: number;
+  metadata: Record<string, string>;
+  latest_invoice: string | { id: string } | null;
+  items?: {
+    data?: Array<{
+      current_period_start?: number;
+      current_period_end?: number;
+    }>;
+  };
 };
 
 export type StripeEvento = {
@@ -23,6 +43,15 @@ export type StripeEvento = {
       payment_status?: StripeCheckoutSession["payment_status"];
       payment_intent?: string | null;
       metadata?: Record<string, string>;
+      customer?: string | null;
+      subscription?: string | { id: string } | null;
+      status?: string;
+      cancel_at_period_end?: boolean;
+      current_period_start?: number;
+      current_period_end?: number;
+      latest_invoice?: string | { id: string } | null;
+      items?: StripeAssinatura["items"];
+      parent?: { subscription_details?: { subscription?: string | { id: string } | null } };
       last_payment_error?: { code?: string } | null;
     };
   };
@@ -90,6 +119,100 @@ export async function criarCheckoutStripe(dados: {
     method: "POST",
     body: parametros,
     idempotencyKey: `checkout-${dados.pagamentoId}-${Date.now()}`,
+  });
+}
+
+export async function criarCheckoutAssinaturaStripe(dados: {
+  usuarioId: string;
+  anuncioId: string;
+  plano: string;
+  nomePlano: string;
+  cuponsMensais: number;
+  valorCentavos: number;
+  email: string;
+  origem: string;
+}): Promise<StripeCheckoutSession> {
+  const retorno = `${dados.origem}/emprestimos/impulsionar?anuncio=${encodeURIComponent(dados.anuncioId)}`;
+  const parametros = new URLSearchParams({
+    mode: "subscription",
+    success_url: `${retorno}&resultado=assinatura&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${retorno}&resultado=cancelado`,
+    client_reference_id: dados.usuarioId,
+    "payment_method_types[0]": "card",
+    "line_items[0][quantity]": "1",
+    "line_items[0][price_data][currency]": "brl",
+    "line_items[0][price_data][unit_amount]": String(dados.valorCentavos),
+    "line_items[0][price_data][recurring][interval]": "month",
+    "line_items[0][price_data][product_data][name]": `Ciclo Membro ${dados.nomePlano}`,
+    "line_items[0][price_data][product_data][description]": `${dados.cuponsMensais} cupons de impulsionamento por mês`,
+    "metadata[tipo]": "assinatura_membro",
+    "metadata[usuario_id]": dados.usuarioId,
+    "metadata[anuncio_id]": dados.anuncioId,
+    "metadata[plano]": dados.plano,
+    "subscription_data[metadata][tipo]": "assinatura_membro",
+    "subscription_data[metadata][usuario_id]": dados.usuarioId,
+    "subscription_data[metadata][plano]": dados.plano,
+  });
+  if (dados.email) parametros.set("customer_email", dados.email);
+
+  return requisicaoStripe<StripeCheckoutSession>("checkout/sessions", {
+    method: "POST",
+    body: parametros,
+    idempotencyKey: `assinatura-${dados.usuarioId}-${dados.plano}-${Date.now()}`,
+  });
+}
+
+export async function criarCheckoutCuponsExtrasStripe(dados: {
+  compraId: string;
+  usuarioId: string;
+  anuncioId: string;
+  quantidade: number;
+  valorCentavos: number;
+  email: string;
+  origem: string;
+}): Promise<StripeCheckoutSession> {
+  const retorno = `${dados.origem}/emprestimos/impulsionar?anuncio=${encodeURIComponent(dados.anuncioId)}`;
+  const parametros = new URLSearchParams({
+    mode: "payment",
+    success_url: `${retorno}&resultado=cupons&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${retorno}&resultado=cancelado_compra`,
+    client_reference_id: dados.compraId,
+    "payment_method_types[0]": "card",
+    "payment_method_types[1]": "pix",
+    "line_items[0][quantity]": "1",
+    "line_items[0][price_data][currency]": "brl",
+    "line_items[0][price_data][unit_amount]": String(dados.valorCentavos),
+    "line_items[0][price_data][product_data][name]": `${dados.quantidade} ${dados.quantidade === 1 ? "cupom extra" : "cupons extras"} do Ciclo`,
+    "line_items[0][price_data][product_data][description]": "Cupons sem vencimento para impulsionar anúncios",
+    "metadata[tipo]": "compra_cupons",
+    "metadata[compra_id]": dados.compraId,
+    "metadata[usuario_id]": dados.usuarioId,
+    "metadata[anuncio_id]": dados.anuncioId,
+    "metadata[quantidade]": String(dados.quantidade),
+    "payment_intent_data[metadata][tipo]": "compra_cupons",
+    "payment_intent_data[metadata][compra_id]": dados.compraId,
+    "payment_intent_data[metadata][usuario_id]": dados.usuarioId,
+  });
+  if (dados.email) parametros.set("customer_email", dados.email);
+
+  return requisicaoStripe<StripeCheckoutSession>("checkout/sessions", {
+    method: "POST",
+    body: parametros,
+    idempotencyKey: `compra-cupons-${dados.compraId}`,
+  });
+}
+
+export async function consultarAssinaturaStripe(subscriptionId: string): Promise<StripeAssinatura> {
+  return requisicaoStripe<StripeAssinatura>(`subscriptions/${encodeURIComponent(subscriptionId)}`);
+}
+
+export async function criarPortalAssinaturaStripe(
+  customerId: string,
+  retorno: string,
+): Promise<{ url: string }> {
+  return requisicaoStripe<{ url: string }>("billing_portal/sessions", {
+    method: "POST",
+    body: new URLSearchParams({ customer: customerId, return_url: retorno }),
   });
 }
 

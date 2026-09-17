@@ -235,6 +235,15 @@ export function IconeCartao({ className }: PropsIcone) {
   );
 }
 
+export function IconeTicket({ className }: PropsIcone) {
+  return (
+    <svg {...BASE} className={className} strokeWidth={1.8}>
+      <path d="M4 6h16v4a2.2 2.2 0 0 0 0 4v4H4v-4a2.2 2.2 0 0 0 0-4V6Z" />
+      <path d="M13 8v2M13 14v2" />
+    </svg>
+  );
+}
+
 export function IconeEscudo({ className }: PropsIcone) {
   return (
     <svg {...BASE} className={className}>

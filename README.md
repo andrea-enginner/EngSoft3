@@ -36,8 +36,12 @@ npm run start  # executa a versão de produção
 
 ## Simulação de pagamento
 
-O pagamento de empréstimos usa o Stripe Checkout exclusivamente em modo de
-teste. Depois de aplicar as migrations do Supabase, configure no `.env.local`:
+O pagamento de empréstimos e a assinatura mensal **Ciclo Membro** usam o
+Stripe Checkout exclusivamente em modo de teste. A assinatura libera 3, 8 ou
+20 cupons por ciclo, conforme o plano; cada cupom impulsiona um anúncio por 7
+dias. Assinantes também podem comprar pacotes extras de 1, 2 ou 5 cupons; esses
+cupons avulsos não expiram. Depois de aplicar as migrations do Supabase,
+configure no `.env.local`:
 
 ```env
 SUPABASE_SERVICE_ROLE_KEY=sua_chave_service_role
@@ -55,9 +59,18 @@ Para testar webhooks localmente com o Stripe CLI:
 stripe listen --forward-to localhost:3000/api/pagamentos/webhook
 ```
 
-Copie o segredo `whsec_...` exibido pelo comando para o `.env.local`. Na tela de
-um empréstimo aceito, o solicitante poderá abrir o checkout e usar os cartões de
-teste apresentados pela própria aplicação. Nenhum cartão real deve ser usado.
+Copie o segredo `whsec_...` exibido pelo comando para o `.env.local`. O mesmo
+webhook confirma pagamentos de empréstimos, sincroniza assinaturas e credita os
+cupons após cada fatura mensal paga. Na tela de um empréstimo aceito ou na opção
+**Impulsionar** de um anúncio, use somente os dados de teste disponibilizados
+pelo Stripe. Nenhum cartão real deve ser usado.
+
+No Dashboard do Stripe, o endpoint `/api/pagamentos/webhook` deve receber pelo
+menos os eventos `checkout.session.completed`, `invoice.paid`,
+`invoice.payment_failed`, `customer.subscription.updated` e
+`customer.subscription.deleted`, além de
+`checkout.session.async_payment_succeeded` e
+`checkout.session.async_payment_failed` para compras avulsas via Pix.
 
 ## Fluxo de trabalho em equipe
 
