@@ -78,8 +78,12 @@ begin
 
   if not found then raise exception 'Anúncio indisponível'; end if;
   if v_anuncio.usuario_id = v_usuario_id then raise exception 'O dono não pode reservar o próprio anúncio'; end if;
-  if v_anuncio.valor_unitario_centavos is null or v_anuncio.duracao_unidade not in ('dias', 'semanas') then
+  if v_anuncio.valor_unitario_centavos is null or v_anuncio.duracao_quantidade is null
+    or v_anuncio.duracao_unidade not in ('dias', 'semanas') then
     raise exception 'O anúncio não possui condições completas';
+  end if;
+  if p_duracao_quantidade > v_anuncio.duracao_quantidade then
+    raise exception 'A duração solicitada ultrapassa o limite do anúncio';
   end if;
 
   v_fator_segundos := case v_anuncio.duracao_unidade when 'dias' then 86400 else 604800 end;

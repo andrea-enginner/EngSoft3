@@ -14,8 +14,8 @@ function iniciais(nome: string) {
 export function CartaoDono({ dono }: { dono: DonoItem }) {
   return (
     <section aria-labelledby="titulo-dono" className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
-      <h2 id="titulo-dono" className="mb-4 text-xs font-bold uppercase tracking-wide text-muted">Sobre o dono</h2>
-      <div className="flex items-center gap-3">
+      <h2 id="titulo-dono" className="mb-4 text-center text-xs font-bold uppercase tracking-wide text-muted">Sobre o dono</h2>
+      <div className="flex items-center justify-center gap-3">
         {dono.avatar ? (
           <Image src={dono.avatar} alt={`Foto de ${dono.nome}`} width={48} height={48} className="h-12 w-12 rounded-full object-cover" unoptimized={dono.avatar.startsWith("http")} />
         ) : (
@@ -32,7 +32,7 @@ export function CartaoDono({ dono }: { dono: DonoItem }) {
           </p> : null}
         </div>
       </div>
-      {dono.confiavel ? <p className="mt-4 flex items-center gap-2 text-sm font-medium text-primary-700"><span aria-hidden="true">♦</span>Membro confiável da comunidade</p> : null}
+      {dono.confiavel ? <p className="mt-4 flex items-center justify-center gap-2 text-center text-sm font-medium text-primary-700"><span aria-hidden="true">♦</span>Membro confiável da comunidade</p> : null}
     </section>
   );
 }

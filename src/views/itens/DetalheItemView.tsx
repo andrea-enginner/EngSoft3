@@ -30,21 +30,21 @@ export function DetalheItemView({ item, autenticado }: { item: ItemDetalhe; aute
         </div>
 
         <div className="space-y-6">
-          <section>
+          <section className="text-center lg:text-left">
             <h1 className="text-2xl font-bold tracking-tight text-primary-900 sm:text-3xl">{item.titulo}</h1>
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted">
+            <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm text-muted lg:justify-start">
               {item.localizacao !== "Local não informado" ? <span className="flex items-center gap-1.5"><IconeLocal className="h-4 w-4" />{item.localizacao}</span> : null}
               <time dateTime={item.publicadoEm}>{formatarPublicacao(item.publicadoEm)}</time>
             </div>
             {item.categoria ? <p className="mt-5 inline-flex rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">{item.categoria}</p> : null}
-            {item.descricao ? <p className="mt-5 leading-relaxed text-foreground">{item.descricao}</p> : null}
-            {termos ? <dl className="mt-6 grid gap-3 rounded-2xl border border-primary-100 bg-primary-50/50 p-5 sm:grid-cols-2">
+            {item.descricao ? <p className="mt-5 text-left leading-relaxed text-foreground">{item.descricao}</p> : null}
+            {termos ? <dl className="mt-6 grid gap-3 rounded-2xl border border-primary-100 bg-primary-50/50 p-5 text-center sm:grid-cols-2">
               <div><dt className="text-xs font-semibold uppercase tracking-wide text-muted">Tarifa</dt><dd className="mt-1 text-xl font-bold text-primary-700">{formatarTarifa(termos.valor, termos.unidade)}</dd></div>
-              <div><dt className="text-xs font-semibold uppercase tracking-wide text-muted">Período</dt><dd className="mt-1 font-semibold text-foreground">{formatarDuracao(termos.quantidade, termos.unidade)}</dd></div>
-              <div className="border-t border-primary-100 pt-3 sm:col-span-2"><dt className="text-xs text-muted">Valor total para o período</dt><dd className="mt-1 text-lg font-bold text-primary-900">{formatarValor(calcularTotal(termos.valor, termos.quantidade))}</dd></div>
+              <div><dt className="text-xs font-semibold uppercase tracking-wide text-muted">Limite máximo</dt><dd className="mt-1 font-semibold text-foreground">{formatarDuracao(termos.quantidade, termos.unidade)}</dd></div>
+              <div className="border-t border-primary-100 pt-3 sm:col-span-2"><dt className="text-xs text-muted">Valor no período máximo</dt><dd className="mt-1 text-lg font-bold text-primary-900">{formatarValor(calcularTotal(termos.valor, termos.quantidade))}</dd></div>
             </dl> : null}
             {item.aceitaPropostas ? <p className="mt-4 font-semibold text-primary-700">Aceito propostas!</p> : null}
-            {item.condicao !== "Não informada" ? <p className="mt-5 flex items-center gap-2 border-t border-border pt-4 text-sm text-muted">
+            {item.condicao !== "Não informada" ? <p className="mt-5 flex items-center justify-center gap-2 border-t border-border pt-4 text-sm text-muted lg:justify-start">
               <IconeCondicao className="h-4 w-4" />
               Condição: <strong className="font-semibold text-foreground">{item.condicao}</strong>
             </p> : null}

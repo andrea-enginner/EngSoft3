@@ -22,7 +22,7 @@ export function GaleriaItem({ imagens, titulo }: { imagens?: string[]; titulo: s
       </div>
 
       {imagens && imagens.length > 0 ? (
-        <div className="flex gap-3" aria-label="Miniaturas">
+        <div className="flex justify-center gap-3" aria-label="Miniaturas">
           {imagens.map((imagem, indice) => (
             <button
               key={`${imagem}-${indice}`}
