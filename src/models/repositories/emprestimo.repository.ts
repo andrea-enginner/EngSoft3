@@ -32,6 +32,8 @@ type RegistroEmprestimo = {
   inicio_em: string;
   fim_em: string;
   criado_em: string;
+  devolucao_solicitada_em: string | null;
+  recebido_em: string | null;
   status: string;
   valor_unitario_centavos: number;
   valor_total_centavos: number;
@@ -59,6 +61,8 @@ function normalizar(registro: RegistroEmprestimo): Emprestimo {
     inicioEm: registro.inicio_em,
     fimEm: registro.fim_em,
     criadoEm: registro.criado_em,
+    devolucaoSolicitadaEm: registro.devolucao_solicitada_em ?? undefined,
+    recebidoEm: registro.recebido_em ?? undefined,
     status: STATUS.includes(registro.status as StatusEmprestimo)
       ? registro.status as StatusEmprestimo
       : "aguardando",
@@ -106,4 +110,26 @@ export async function criarSolicitacaoEmprestimo(
     { p_anuncio_id: anuncioId, p_inicio_em: inicioEm },
   );
   return String(id ?? "");
+}
+
+export async function registrarDevolucaoEmprestimo(
+  sessao: SessaoUsuario,
+  solicitacaoId: string,
+): Promise<string> {
+  return executarRpcSupabase<string>(
+    "registrar_devolucao_emprestimo",
+    sessao.token,
+    { p_solicitacao_id: solicitacaoId },
+  );
+}
+
+export async function registrarRecebimentoEmprestimo(
+  sessao: SessaoUsuario,
+  solicitacaoId: string,
+): Promise<string> {
+  return executarRpcSupabase<string>(
+    "confirmar_recebimento_emprestimo",
+    sessao.token,
+    { p_solicitacao_id: solicitacaoId },
+  );
 }
