@@ -13,14 +13,14 @@ import {
   useState,
 } from "react";
 import { publicarEmprestimoAction } from "@/controllers/publicar-emprestimo.actions";
-import type { UnidadeDuracao } from "@/models/entities/item";
+import type { EmprestimoEdicao, UnidadeDuracao } from "@/models/entities/item";
 
 const MAX_FOTOS = 4;
 const MAX_TAMANHO_FOTO = 5 * 1024 * 1024;
 const MAX_VALOR_CENTAVOS = 2_147_483_647;
 const FORMATOS_ACEITOS = ["image/jpeg", "image/png", "image/webp"];
 const SUGESTOES_UNIDADE: Record<string, UnidadeDuracao> = {
-  ferramentas: "horas",
+  ferramentas: "dias",
   livros: "semanas",
   eletronicos: "dias",
   esporte: "dias",
@@ -78,18 +78,19 @@ function IconeUso() {
   );
 }
 
-export function PublicarEmprestimoView() {
+export function PublicarEmprestimoView({ anuncio }: { anuncio?: EmprestimoEdicao }) {
   const router = useRouter();
   const [resultado, executarPublicacao, enviando] = useActionState(publicarEmprestimoAction, { erro: "" });
   const [fotos, setFotos] = useState<FotoSelecionada[]>([]);
-  const [titulo, setTitulo] = useState("");
-  const [categoria, setCategoria] = useState("");
-  const [condicao, setCondicao] = useState("");
-  const [valorUnitario, setValorUnitario] = useState("");
-  const [duracaoQuantidade, setDuracaoQuantidade] = useState("");
-  const [duracaoUnidade, setDuracaoUnidade] = useState<UnidadeDuracao | "">("");
+  const [titulo, setTitulo] = useState(anuncio?.titulo ?? "");
+  const [categoria, setCategoria] = useState(anuncio?.categoria ?? "");
+  const [condicao, setCondicao] = useState(anuncio?.condicao ?? "");
+  const [valorUnitario, setValorUnitario] = useState(anuncio ? (anuncio.valorUnitarioCentavos / 100).toFixed(2) : "");
+  const [duracaoQuantidade, setDuracaoQuantidade] = useState(anuncio ? String(anuncio.duracaoQuantidade) : "");
+  const unidadeInicial = anuncio && ["dias", "semanas"].includes(anuncio.duracaoUnidade) ? anuncio.duracaoUnidade : "";
+  const [duracaoUnidade, setDuracaoUnidade] = useState<UnidadeDuracao | "">(unidadeInicial);
   const [unidadeAlteradaManualmente, setUnidadeAlteradaManualmente] = useState(false);
-  const [descricao, setDescricao] = useState("");
+  const [descricao, setDescricao] = useState(anuncio?.descricao ?? "");
   const [erros, setErros] = useState<ErrosFormulario>({});
   const [status, setStatus] = useState("");
   const fotosRef = useRef<FotoSelecionada[]>([]);
@@ -179,7 +180,7 @@ export function PublicarEmprestimoView() {
 
   function validar(): ErrosFormulario {
     return {
-      fotos: fotos.length === 0 ? "Adicione pelo menos uma foto." : undefined,
+      fotos: fotos.length === 0 && !anuncio ? "Adicione pelo menos uma foto." : undefined,
       titulo: titulo.trim() ? undefined : "Informe o título do item.",
       categoria: categoria ? undefined : "Selecione uma categoria.",
       condicao: condicao ? undefined : "Selecione a condição do item.",
@@ -213,6 +214,7 @@ export function PublicarEmprestimoView() {
     }
 
     const dados = new FormData();
+    if (anuncio) dados.set("anuncioId", anuncio.id);
     dados.set("titulo", titulo.trim());
     dados.set("categoria", categoria);
     dados.set("condicao", condicao);
@@ -236,20 +238,25 @@ export function PublicarEmprestimoView() {
   return (
     <main className="min-h-full bg-background px-4 py-8 sm:px-6 sm:py-12">
       <section className="mx-auto max-w-3xl rounded-2xl border border-primary-100 bg-surface px-5 py-8 shadow-[0_16px_45px_rgba(76,29,149,0.08)] sm:px-8 lg:px-10">
-        <h1 className="text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">O que você quer emprestar?</h1>
+        <h1 className="text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{anuncio ? "Editar empréstimo" : "O que você quer emprestar?"}</h1>
 
         <form className="mt-9 space-y-10" noValidate onSubmit={enviar}>
           <fieldset aria-describedby={erros.fotos ? "erro-fotos" : "ajuda-fotos"}>
             <legend className="text-2xl font-semibold text-foreground">Fotos do item</legend>
-            <p id="ajuda-fotos" className="mt-2 text-sm text-muted">Adicione de uma a quatro fotos claras e bem iluminadas.</p>
+            <p id="ajuda-fotos" className="mt-2 text-sm text-muted">{anuncio ? "As fotos atuais serão mantidas nesta edição." : "Adicione de uma a quatro fotos claras e bem iluminadas."}</p>
             <div className="mt-5 flex flex-wrap gap-4">
-              {fotos.length < MAX_FOTOS && (
+              {!anuncio && fotos.length < MAX_FOTOS && (
                 <label className="flex h-32 w-32 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary-300 bg-transparent text-center text-sm font-medium text-muted transition hover:border-primary-500 hover:text-primary-700 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100">
                   <input ref={inputFotosRef} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={selecionarFotos} aria-invalid={Boolean(erros.fotos)} aria-describedby={erros.fotos ? "ajuda-fotos erro-fotos" : "ajuda-fotos"} />
                   <IconeCamera />
                   <span className="mt-2">Adicionar foto</span>
                 </label>
               )}
+              {anuncio?.imagens.map((imagem, indice) => (
+                <div key={imagem} className="relative h-32 w-32 overflow-hidden rounded-xl border border-border bg-soft">
+                  <Image src={imagem} alt={`Foto atual ${indice + 1}`} fill unoptimized={imagem.startsWith("http")} className="object-cover" />
+                </div>
+              ))}
               {fotos.map((foto, indice) => (
                 <div key={foto.id} className="group relative h-32 w-32 overflow-hidden rounded-xl border border-border bg-soft">
                   <Image src={foto.url} alt={`Prévia da foto ${indice + 1}`} fill unoptimized className="object-cover" />
@@ -297,8 +304,6 @@ export function PublicarEmprestimoView() {
                     <label htmlFor="duracao-unidade" className="mb-2 block text-sm font-medium">Unidade</label>
                     <select ref={duracaoUnidadeRef} id="duracao-unidade" name="duracaoUnidade" value={duracaoUnidade} onChange={(event) => { setDuracaoUnidade(event.target.value as UnidadeDuracao | ""); setUnidadeAlteradaManualmente(Boolean(event.target.value)); limparErro("duracaoUnidade"); }} aria-invalid={Boolean(erros.duracaoUnidade)} aria-describedby={erros.duracaoUnidade ? "erro-duracao-unidade ajuda-duracao" : "ajuda-duracao"} className={`${campoBase} ${erros.duracaoUnidade ? "border-red-600" : "border-primary-300"}`}>
                       <option value="">Selecione...</option>
-                      <option value="minutos">Minutos</option>
-                      <option value="horas">Horas</option>
                       <option value="dias">Dias</option>
                       <option value="semanas">Semanas</option>
                     </select>
@@ -356,8 +361,8 @@ export function PublicarEmprestimoView() {
           </fieldset>
 
           <div className="border-t border-border pt-6">
-            <button type="submit" disabled={enviando} className="w-full rounded-xl bg-primary-700 px-5 py-4 font-semibold text-white shadow-sm hover:bg-primary-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60">{enviando ? "Publicando…" : "Publicar empréstimo"}</button>
-            <p className="mt-4 text-center text-xs text-muted">Ao publicar, você concorda com nossos <span className="font-medium">Termos de Uso</span>.</p>
+            <button type="submit" disabled={enviando} className="w-full rounded-xl bg-primary-700 px-5 py-4 font-semibold text-white shadow-sm hover:bg-primary-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60">{enviando ? (anuncio ? "Salvando…" : "Publicando…") : (anuncio ? "Salvar alterações" : "Publicar empréstimo")}</button>
+            {!anuncio ? <p className="mt-4 text-center text-xs text-muted">Ao publicar, você concorda com nossos <span className="font-medium">Termos de Uso</span>.</p> : null}
             <p className="mt-4 text-center text-sm font-medium text-red-700" role="status" aria-live="polite">{status || resultado.erro}</p>
             {resultado.erro.startsWith("Entre na sua conta") ? <p className="mt-2 text-center text-sm"><Link href="/login?retorno=/publicar" className="font-semibold text-primary-700 underline">Ir para o login</Link></p> : null}
           </div>

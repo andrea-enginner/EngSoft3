@@ -14,6 +14,7 @@ export async function solicitarEmprestimoAction(
       await sessaoAtual(),
       String(dados.get("anuncioId") ?? ""),
       String(dados.get("inicioEm") ?? ""),
+      Number(dados.get("duracaoQuantidade")),
       dados.get("confirmacao") === "on",
     );
     return { erro: "", sucesso: true };

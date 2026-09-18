@@ -16,6 +16,7 @@ export async function solicitarEmprestimo(
   sessao: SessaoUsuario | null,
   anuncioId: string,
   inicioEm: string,
+  duracaoQuantidade: number,
   confirmado: boolean,
 ) {
   if (!sessao) throw new SolicitacaoEmprestimoError("Entre na sua conta para solicitar o empréstimo.");
@@ -25,7 +26,10 @@ export async function solicitarEmprestimo(
   }
   const inicio = new Date(inicioEm);
   if (!Number.isFinite(inicio.getTime()) || inicio.getTime() <= Date.now()) {
-    throw new SolicitacaoEmprestimoError("Escolha uma data e hora de início futuras.");
+    throw new SolicitacaoEmprestimoError("Escolha uma data de início futura.");
   }
-  return criarSolicitacaoEmprestimo(sessao, anuncioId, inicio.toISOString());
+  if (!Number.isSafeInteger(duracaoQuantidade) || duracaoQuantidade < 1 || duracaoQuantidade > 9999) {
+    throw new SolicitacaoEmprestimoError("Informe uma duração entre 1 e 9999 unidades.");
+  }
+  return criarSolicitacaoEmprestimo(sessao, anuncioId, inicio.toISOString(), duracaoQuantidade);
 }

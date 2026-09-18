@@ -45,3 +45,7 @@ export type NovoEmprestimo = {
   duracaoQuantidade: number;
   duracaoUnidade: UnidadeDuracao;
 };
+
+export type EmprestimoEdicao = NovoEmprestimo & {
+  imagens: string[];
+};
