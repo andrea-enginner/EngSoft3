@@ -49,11 +49,13 @@ grant execute on function public.atualizar_emprestimo(uuid,text,text,text,text,i
 
 revoke all on function public.solicitar_reserva(uuid,timestamptz) from authenticated;
 drop function if exists public.solicitar_reserva(uuid,timestamptz);
+drop function if exists public.solicitar_reserva(uuid,timestamptz,integer);
 
-create function public.solicitar_reserva(
+create or replace function public.solicitar_reserva(
   p_anuncio_id uuid,
   p_inicio_em timestamptz,
-  p_duracao_quantidade integer
+  p_duracao_quantidade integer,
+  p_duracao_unidade text
 )
 returns uuid
 language plpgsql
@@ -63,14 +65,17 @@ as $$
 declare
   v_usuario_id uuid := auth.uid();
   v_anuncio public.anuncios%rowtype;
-  v_fator_segundos bigint;
+  v_duracao_dias bigint;
+  v_limite_dias bigint;
   v_fim_em timestamptz;
+  v_valor_unitario integer;
   v_total bigint;
   v_id uuid;
 begin
   if v_usuario_id is null then raise exception 'Autenticação obrigatória'; end if;
   if p_inicio_em is null or p_inicio_em <= now() then raise exception 'A data de início deve estar no futuro'; end if;
-  if p_duracao_quantidade is null or p_duracao_quantidade not between 1 and 9999 then raise exception 'Duração inválida'; end if;
+  if p_duracao_quantidade is null or p_duracao_quantidade not between 1 and 69993 then raise exception 'Duração inválida'; end if;
+  if p_duracao_unidade not in ('dias', 'semanas') then raise exception 'Unidade de duração inválida'; end if;
 
   select * into v_anuncio
   from public.anuncios
@@ -82,22 +87,30 @@ begin
     or v_anuncio.duracao_unidade not in ('dias', 'semanas') then
     raise exception 'O anúncio não possui condições completas';
   end if;
-  if p_duracao_quantidade > v_anuncio.duracao_quantidade then
+  if v_anuncio.duracao_unidade = 'dias' and p_duracao_unidade <> 'dias' then
+    raise exception 'A unidade solicitada não é permitida para este anúncio';
+  end if;
+
+  v_duracao_dias := p_duracao_quantidade::bigint * case p_duracao_unidade when 'semanas' then 7 else 1 end;
+  v_limite_dias := v_anuncio.duracao_quantidade::bigint * case v_anuncio.duracao_unidade when 'semanas' then 7 else 1 end;
+  if v_duracao_dias > v_limite_dias then
     raise exception 'A duração solicitada ultrapassa o limite do anúncio';
   end if;
 
-  v_fator_segundos := case v_anuncio.duracao_unidade when 'dias' then 86400 else 604800 end;
-  v_fim_em := p_inicio_em
-    + (p_duracao_quantidade::bigint * v_fator_segundos)::double precision * interval '1 second';
-  v_total := v_anuncio.valor_unitario_centavos::bigint * p_duracao_quantidade;
+  v_valor_unitario := case
+    when v_anuncio.duracao_unidade = 'semanas' and p_duracao_unidade = 'dias'
+      then round(v_anuncio.valor_unitario_centavos::numeric / 7)::integer
+    else v_anuncio.valor_unitario_centavos
+  end;
+  v_total := v_valor_unitario::bigint * p_duracao_quantidade;
+  v_fim_em := p_inicio_em + v_duracao_dias::double precision * interval '1 day';
 
   insert into public.solicitacoes_emprestimo (
     anuncio_id, dono_id, interessado_id, inicio_em, fim_em,
     valor_unitario_centavos, duracao_quantidade, duracao_unidade, valor_total_centavos
   ) values (
     v_anuncio.id, v_anuncio.usuario_id, v_usuario_id, p_inicio_em, v_fim_em,
-    v_anuncio.valor_unitario_centavos, p_duracao_quantidade,
-    v_anuncio.duracao_unidade, v_total
+    v_valor_unitario, p_duracao_quantidade, p_duracao_unidade, v_total
   ) returning id into v_id;
 
   return v_id;
@@ -107,5 +120,5 @@ exception
 end;
 $$;
 
-revoke all on function public.solicitar_reserva(uuid,timestamptz,integer) from public, anon;
-grant execute on function public.solicitar_reserva(uuid,timestamptz,integer) to authenticated;
+revoke all on function public.solicitar_reserva(uuid,timestamptz,integer,text) from public, anon;
+grant execute on function public.solicitar_reserva(uuid,timestamptz,integer,text) to authenticated;

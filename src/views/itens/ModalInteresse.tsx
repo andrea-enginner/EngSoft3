@@ -6,7 +6,7 @@ import { MouseEvent, useActionState, useId, useRef, useState, useTransition } fr
 import { useFormStatus } from "react-dom";
 import { iniciarConversaAction } from "@/controllers/mensagem.actions";
 import { solicitarEmprestimoAction } from "@/controllers/solicitar-emprestimo.actions";
-import { calcularTotal, formatarDuracao, formatarTarifa, formatarValor } from "@/lib/formatar-emprestimo";
+import { calcularTotalProporcional, formatarDuracao, formatarTarifa, formatarValor } from "@/lib/formatar-emprestimo";
 import type { UnidadeDuracao } from "@/models/entities/item";
 import { IconeCoracao } from "@/views/comuns/Icones";
 
@@ -31,18 +31,46 @@ export function ModalInteresse({ anuncioId, nomeDono, tituloItem, valorUnitarioC
   const [inicioLocal, setInicioLocal] = useState("");
   const [inicioMinimo, setInicioMinimo] = useState("");
   const [quantidadeTexto, setQuantidadeTexto] = useState(String(duracaoQuantidade));
+  const [unidadeReserva, setUnidadeReserva] = useState<"dias" | "semanas">(duracaoUnidade === "semanas" ? "semanas" : "dias");
   const [erroConversa, setErroConversa] = useState("");
   const [abrindoConversa, iniciarAbertura] = useTransition();
   const inicio = inicioLocal ? new Date(`${inicioLocal}T00:00:00`) : null;
   const inicioValido = inicio && Number.isFinite(inicio.getTime());
   const quantidade = Number(quantidadeTexto);
-  const quantidadeValida = Number.isSafeInteger(quantidade) && quantidade >= 1 && quantidade <= duracaoQuantidade;
-  const fim = inicioValido && quantidadeValida ? adicionarDuracao(inicio, quantidade, duracaoUnidade) : null;
+  const limiteQuantidade = unidadeReserva === "dias" && duracaoUnidade === "semanas" ? duracaoQuantidade * 7 : duracaoQuantidade;
+  const quantidadeValida = Number.isSafeInteger(quantidade) && quantidade >= 1 && quantidade <= limiteQuantidade;
+  const fim = inicioValido && quantidadeValida ? adicionarDuracao(inicio, quantidade, unidadeReserva) : null;
   const inicioIso = inicioValido ? inicio.toISOString() : "";
+  const total = quantidadeValida
+    ? calcularTotalProporcional(valorUnitarioCentavos, duracaoUnidade, quantidade, unidadeReserva)
+    : null;
 
   function abrir() { const amanha = new Date(); amanha.setDate(amanha.getDate() + 1); setInicioMinimo(dataLocal(amanha)); setErroConversa(""); dialogRef.current?.showModal(); }
   function fechar() { dialogRef.current?.close(); }
   function clicarFundo(evento: MouseEvent<HTMLDialogElement>) { if (evento.target === evento.currentTarget) fechar(); }
+  function trocarUnidade(novaUnidade: "dias" | "semanas") {
+    if (novaUnidade === unidadeReserva) return;
+    const quantidadeAtual = quantidadeValida ? quantidade : 1;
+    const novaQuantidade = novaUnidade === "dias" ? quantidadeAtual * 7 : Math.max(1, Math.ceil(quantidadeAtual / 7));
+    setUnidadeReserva(novaUnidade);
+    setQuantidadeTexto(String(Math.min(novaUnidade === "dias" ? duracaoQuantidade * 7 : duracaoQuantidade, novaQuantidade)));
+  }
+  function diminuirDuracao() {
+    if (unidadeReserva === "semanas" && quantidade <= 1) {
+      setUnidadeReserva("dias");
+      setQuantidadeTexto("6");
+      return;
+    }
+    setQuantidadeTexto(String(Math.max(1, (quantidadeValida ? quantidade : 1) - 1)));
+  }
+  function aumentarDuracao() {
+    if (duracaoUnidade === "semanas" && unidadeReserva === "dias" && quantidade === 6) {
+      setUnidadeReserva("semanas");
+      setQuantidadeTexto("1");
+      return;
+    }
+    setQuantidadeTexto(String(Math.min(limiteQuantidade, (quantidadeValida ? quantidade : 0) + 1)));
+  }
   function abrirConversa() {
     setErroConversa("");
     iniciarAbertura(async () => {
@@ -57,16 +85,16 @@ export function ModalInteresse({ anuncioId, nomeDono, tituloItem, valorUnitarioC
     <p className="mt-3 text-center text-xs text-muted">Escolha o início e revise as condições da reserva.</p>
     <dialog ref={dialogRef} aria-labelledby={idTitulo} onClick={clicarFundo} onClose={() => botaoAbrirRef.current?.focus()} className="m-auto w-[min(92vw,460px)] rounded-2xl border border-border bg-surface p-0 text-foreground shadow-2xl backdrop:bg-slate-950/40">
       <form action={acao} className="p-6">
-        <input type="hidden" name="anuncioId" value={anuncioId} /><input type="hidden" name="inicioEm" value={inicioIso} /><input type="hidden" name="duracaoQuantidade" value={quantidadeValida ? quantidade : ""} />
+        <input type="hidden" name="anuncioId" value={anuncioId} /><input type="hidden" name="inicioEm" value={inicioIso} /><input type="hidden" name="duracaoQuantidade" value={quantidadeValida ? quantidade : ""} /><input type="hidden" name="duracaoUnidade" value={unidadeReserva} />
         <div className="relative px-10 text-center"><p className="text-xs font-bold uppercase tracking-wide text-primary-600">Solicitação de reserva</p><h2 id={idTitulo} className="mt-1 text-xl font-bold text-primary-900">Revise antes de enviar</h2><button type="button" onClick={fechar} aria-label="Fechar" className="absolute -right-2 -top-2 grid h-9 w-9 place-items-center rounded-full text-xl text-muted hover:bg-soft hover:text-primary-700">×</button></div>
         <section aria-label="Resumo do empréstimo" className="mt-5 rounded-xl border border-border bg-primary-50/50 p-4 text-center">
           <h3 className="font-bold text-primary-900">{tituloItem}</h3><p className="mt-1 text-sm text-muted">Disponibilizado por {nomeDono}</p>
-          <dl className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-xs text-muted">Tarifa</dt><dd className="mt-1 font-bold text-primary-700">{formatarTarifa(valorUnitarioCentavos, duracaoUnidade)}</dd></div><div><dt className="text-xs text-muted">Período escolhido</dt><dd className="mt-1 font-semibold">{quantidadeValida ? formatarDuracao(quantidade, duracaoUnidade) : "—"}</dd></div><div className="col-span-2 border-t border-primary-100 pt-3"><dt className="text-xs text-muted">Valor total</dt><dd className="mt-1 text-lg font-bold text-primary-900">{quantidadeValida ? formatarValor(calcularTotal(valorUnitarioCentavos, quantidade)) : "—"}</dd></div>{condicao ? <div className="col-span-2"><dt className="text-xs text-muted">Condição do item</dt><dd className="mt-1 font-semibold">{condicao}</dd></div> : null}</dl>
+          <dl className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-xs text-muted">Tarifa</dt><dd className="mt-1 font-bold text-primary-700">{formatarTarifa(valorUnitarioCentavos, duracaoUnidade)}</dd></div><div><dt className="text-xs text-muted">Período escolhido</dt><dd className="mt-1 font-semibold">{quantidadeValida ? formatarDuracao(quantidade, unidadeReserva) : "—"}</dd></div><div className="col-span-2 border-t border-primary-100 pt-3"><dt className="text-xs text-muted">Valor proporcional</dt><dd className="mt-1 text-lg font-bold text-primary-900">{total !== null ? formatarValor(total) : "—"}</dd></div>{condicao ? <div className="col-span-2"><dt className="text-xs text-muted">Condição do item</dt><dd className="mt-1 font-semibold">{condicao}</dd></div> : null}</dl>
         </section>
         {estado.sucesso ? <div role="status" className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800"><p className="font-semibold">Solicitação enviada.</p><p className="mt-1">Acompanhe a reserva ou converse com o proprietário.</p><div className="mt-4 flex flex-wrap gap-2"><Link href="/emprestimos" className="rounded-lg border border-emerald-200 px-3 py-2 font-semibold hover:bg-emerald-100">Ver solicitações</Link><button type="button" disabled={abrindoConversa} onClick={abrirConversa} className="rounded-lg bg-primary-700 px-3 py-2 font-semibold text-white hover:bg-primary-900 disabled:opacity-60">{abrindoConversa ? "Abrindo..." : "Abrir conversa"}</button></div>{erroConversa ? <p role="alert" className="mt-3 font-medium text-red-700">{erroConversa}</p> : null}</div> : <>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div><label htmlFor={`${idTitulo}-inicio`} className="block text-sm font-semibold">Data de início</label><input id={`${idTitulo}-inicio`} type="date" required min={inicioMinimo} value={inicioLocal} onChange={(evento) => setInicioLocal(evento.target.value)} autoFocus className="mt-2 w-full rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100" /></div>
-            <div><label htmlFor={`${idTitulo}-quantidade`} className="block text-sm font-semibold">Quantidade de {duracaoUnidade}</label><div className="mt-2 flex rounded-xl border border-border bg-white focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100"><button type="button" aria-label="Diminuir duração" onClick={() => setQuantidadeTexto(String(Math.max(1, (quantidadeValida ? quantidade : 1) - 1)))} className="w-12 text-xl font-semibold text-primary-700 hover:bg-primary-50">−</button><input id={`${idTitulo}-quantidade`} type="number" required min="1" max={duracaoQuantidade} step="1" value={quantidadeTexto} onChange={(evento) => setQuantidadeTexto(evento.target.value)} aria-describedby={`${idTitulo}-limite`} className="min-w-0 flex-1 border-x border-border px-2 py-3 text-center outline-none" /><button type="button" aria-label="Aumentar duração" onClick={() => setQuantidadeTexto(String(Math.min(duracaoQuantidade, (quantidadeValida ? quantidade : 0) + 1)))} className="w-12 text-xl font-semibold text-primary-700 hover:bg-primary-50">+</button></div><p id={`${idTitulo}-limite`} className="mt-2 text-center text-xs text-muted">Limite do anúncio: {formatarDuracao(duracaoQuantidade, duracaoUnidade)}.</p></div>
+            <div><div className="flex items-center justify-between gap-2"><label htmlFor={`${idTitulo}-quantidade`} className="block text-sm font-semibold">Duração</label>{duracaoUnidade === "semanas" ? <div className="inline-flex rounded-lg bg-primary-50 p-1" aria-label="Unidade da reserva"><button type="button" onClick={() => trocarUnidade("dias")} aria-pressed={unidadeReserva === "dias"} className={`rounded-md px-2.5 py-1 text-xs font-semibold ${unidadeReserva === "dias" ? "bg-white text-primary-700 shadow-sm" : "text-muted"}`}>Dias</button><button type="button" onClick={() => trocarUnidade("semanas")} aria-pressed={unidadeReserva === "semanas"} className={`rounded-md px-2.5 py-1 text-xs font-semibold ${unidadeReserva === "semanas" ? "bg-white text-primary-700 shadow-sm" : "text-muted"}`}>Semanas</button></div> : null}</div><div className="mt-2 flex rounded-xl border border-border bg-white focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100"><button type="button" aria-label="Diminuir duração" onClick={diminuirDuracao} className="w-12 text-xl font-semibold text-primary-700 hover:bg-primary-50">−</button><input id={`${idTitulo}-quantidade`} type="number" required min="1" max={limiteQuantidade} step="1" value={quantidadeTexto} onChange={(evento) => setQuantidadeTexto(evento.target.value)} aria-describedby={`${idTitulo}-limite`} className="min-w-0 flex-1 border-x border-border px-2 py-3 text-center outline-none" /><button type="button" aria-label="Aumentar duração" onClick={aumentarDuracao} className="w-12 text-xl font-semibold text-primary-700 hover:bg-primary-50">+</button></div><p id={`${idTitulo}-limite`} className="mt-2 text-center text-xs text-muted">{quantidadeValida ? `${formatarDuracao(quantidade, unidadeReserva)} de no máximo ${formatarDuracao(duracaoQuantidade, duracaoUnidade)}.` : `Informe um valor entre 1 e ${limiteQuantidade}.`}</p></div>
           </div>
           {fim ? <p className="mt-3 rounded-lg bg-soft px-3 py-2 text-center text-sm text-muted">Término previsto: <strong className="text-foreground">{formatarData(fim)}</strong></p> : <p className="mt-2 text-center text-xs text-muted">Escolha a data e a duração para calcular o término.</p>}
           <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 text-sm"><input type="checkbox" name="confirmacao" required className="mt-0.5 h-4 w-4 accent-primary-700" /><span>Confirmo que revisei o início, o período, o valor e as condições da reserva.</span></label>

@@ -17,6 +17,7 @@ export async function solicitarEmprestimo(
   anuncioId: string,
   inicioEm: string,
   duracaoQuantidade: number,
+  duracaoUnidade: string,
   confirmado: boolean,
 ) {
   if (!sessao) throw new SolicitacaoEmprestimoError("Entre na sua conta para solicitar o empréstimo.");
@@ -28,8 +29,12 @@ export async function solicitarEmprestimo(
   if (!Number.isFinite(inicio.getTime()) || inicio.getTime() <= Date.now()) {
     throw new SolicitacaoEmprestimoError("Escolha uma data de início futura.");
   }
-  if (!Number.isSafeInteger(duracaoQuantidade) || duracaoQuantidade < 1 || duracaoQuantidade > 9999) {
-    throw new SolicitacaoEmprestimoError("Informe uma duração entre 1 e 9999 unidades.");
+  if (!["dias", "semanas"].includes(duracaoUnidade)) {
+    throw new SolicitacaoEmprestimoError("Selecione dias ou semanas para a reserva.");
   }
-  return criarSolicitacaoEmprestimo(sessao, anuncioId, inicio.toISOString(), duracaoQuantidade);
+  const limiteAbsoluto = duracaoUnidade === "dias" ? 69_993 : 9_999;
+  if (!Number.isSafeInteger(duracaoQuantidade) || duracaoQuantidade < 1 || duracaoQuantidade > limiteAbsoluto) {
+    throw new SolicitacaoEmprestimoError("Informe uma duração válida.");
+  }
+  return criarSolicitacaoEmprestimo(sessao, anuncioId, inicio.toISOString(), duracaoQuantidade, duracaoUnidade);
 }
