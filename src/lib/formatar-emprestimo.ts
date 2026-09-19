@@ -22,3 +22,15 @@ export function formatarTarifa(valorCentavos: number, unidade: UnidadeDuracao): 
 export function calcularTotal(valorUnitarioCentavos: number, quantidade: number): number {
   return valorUnitarioCentavos * quantidade;
 }
+
+export function calcularTotalProporcional(
+  valorUnitarioCentavos: number,
+  unidadeTarifa: UnidadeDuracao,
+  quantidade: number,
+  unidadeReserva: UnidadeDuracao,
+): number {
+  const valorReserva = unidadeTarifa === "semanas" && unidadeReserva === "dias"
+    ? Math.round(valorUnitarioCentavos / 7)
+    : valorUnitarioCentavos;
+  return calcularTotal(valorReserva, quantidade);
+}

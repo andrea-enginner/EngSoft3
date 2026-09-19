@@ -64,3 +64,20 @@ export async function salvarEmprestimo(
     throw erro;
   }
 }
+
+export async function atualizarEmprestimoSalvo(
+  sessao: SessaoUsuario,
+  emprestimo: NovoEmprestimo,
+): Promise<void> {
+  const { error } = await clienteAutenticado(sessao).rpc("atualizar_emprestimo", {
+    p_id: emprestimo.id,
+    p_titulo: emprestimo.titulo,
+    p_categoria: emprestimo.categoria,
+    p_condicao: emprestimo.condicao,
+    p_descricao: emprestimo.descricao,
+    p_valor_unitario_centavos: emprestimo.valorUnitarioCentavos,
+    p_duracao_quantidade: emprestimo.duracaoQuantidade,
+    p_duracao_unidade: emprestimo.duracaoUnidade,
+  });
+  if (error) throw error;
+}

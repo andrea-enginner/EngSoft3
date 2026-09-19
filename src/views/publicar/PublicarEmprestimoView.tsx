@@ -13,14 +13,14 @@ import {
   useState,
 } from "react";
 import { publicarEmprestimoAction } from "@/controllers/publicar-emprestimo.actions";
-import type { UnidadeDuracao } from "@/models/entities/item";
+import type { EmprestimoEdicao, UnidadeDuracao } from "@/models/entities/item";
 
 const MAX_FOTOS = 4;
 const MAX_TAMANHO_FOTO = 5 * 1024 * 1024;
 const MAX_VALOR_CENTAVOS = 2_147_483_647;
 const FORMATOS_ACEITOS = ["image/jpeg", "image/png", "image/webp"];
 const SUGESTOES_UNIDADE: Record<string, UnidadeDuracao> = {
-  ferramentas: "horas",
+  ferramentas: "dias",
   livros: "semanas",
   eletronicos: "dias",
   esporte: "dias",
@@ -78,18 +78,19 @@ function IconeUso() {
   );
 }
 
-export function PublicarEmprestimoView() {
+export function PublicarEmprestimoView({ anuncio }: { anuncio?: EmprestimoEdicao }) {
   const router = useRouter();
   const [resultado, executarPublicacao, enviando] = useActionState(publicarEmprestimoAction, { erro: "" });
   const [fotos, setFotos] = useState<FotoSelecionada[]>([]);
-  const [titulo, setTitulo] = useState("");
-  const [categoria, setCategoria] = useState("");
-  const [condicao, setCondicao] = useState("");
-  const [valorUnitario, setValorUnitario] = useState("");
-  const [duracaoQuantidade, setDuracaoQuantidade] = useState("");
-  const [duracaoUnidade, setDuracaoUnidade] = useState<UnidadeDuracao | "">("");
+  const [titulo, setTitulo] = useState(anuncio?.titulo ?? "");
+  const [categoria, setCategoria] = useState(anuncio?.categoria ?? "");
+  const [condicao, setCondicao] = useState(anuncio?.condicao ?? "");
+  const [valorUnitario, setValorUnitario] = useState(anuncio ? (anuncio.valorUnitarioCentavos / 100).toFixed(2) : "");
+  const [duracaoQuantidade, setDuracaoQuantidade] = useState(anuncio ? String(anuncio.duracaoQuantidade) : "");
+  const unidadeInicial = anuncio && ["dias", "semanas"].includes(anuncio.duracaoUnidade) ? anuncio.duracaoUnidade : "";
+  const [duracaoUnidade, setDuracaoUnidade] = useState<UnidadeDuracao | "">(unidadeInicial);
   const [unidadeAlteradaManualmente, setUnidadeAlteradaManualmente] = useState(false);
-  const [descricao, setDescricao] = useState("");
+  const [descricao, setDescricao] = useState(anuncio?.descricao ?? "");
   const [erros, setErros] = useState<ErrosFormulario>({});
   const [status, setStatus] = useState("");
   const fotosRef = useRef<FotoSelecionada[]>([]);
@@ -179,7 +180,7 @@ export function PublicarEmprestimoView() {
 
   function validar(): ErrosFormulario {
     return {
-      fotos: fotos.length === 0 ? "Adicione pelo menos uma foto." : undefined,
+      fotos: fotos.length === 0 && !anuncio ? "Adicione pelo menos uma foto." : undefined,
       titulo: titulo.trim() ? undefined : "Informe o título do item.",
       categoria: categoria ? undefined : "Selecione uma categoria.",
       condicao: condicao ? undefined : "Selecione a condição do item.",
@@ -213,6 +214,7 @@ export function PublicarEmprestimoView() {
     }
 
     const dados = new FormData();
+    if (anuncio) dados.set("anuncioId", anuncio.id);
     dados.set("titulo", titulo.trim());
     dados.set("categoria", categoria);
     dados.set("condicao", condicao);
@@ -236,20 +238,25 @@ export function PublicarEmprestimoView() {
   return (
     <main className="min-h-full bg-background px-4 py-8 sm:px-6 sm:py-12">
       <section className="mx-auto max-w-3xl rounded-2xl border border-primary-100 bg-surface px-5 py-8 shadow-[0_16px_45px_rgba(76,29,149,0.08)] sm:px-8 lg:px-10">
-        <h1 className="text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">O que você quer emprestar?</h1>
+        <h1 className="text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{anuncio ? "Editar empréstimo" : "O que você quer emprestar?"}</h1>
 
         <form className="mt-9 space-y-10" noValidate onSubmit={enviar}>
           <fieldset aria-describedby={erros.fotos ? "erro-fotos" : "ajuda-fotos"}>
-            <legend className="text-2xl font-semibold text-foreground">Fotos do item</legend>
-            <p id="ajuda-fotos" className="mt-2 text-sm text-muted">Adicione de uma a quatro fotos claras e bem iluminadas.</p>
-            <div className="mt-5 flex flex-wrap gap-4">
-              {fotos.length < MAX_FOTOS && (
+            <legend className="w-full text-center text-2xl font-semibold text-foreground">Fotos do item</legend>
+            <p id="ajuda-fotos" className="mt-2 text-center text-sm text-muted">{anuncio ? "As fotos atuais serão mantidas nesta edição." : "Adicione de uma a quatro fotos claras e bem iluminadas."}</p>
+            <div className="mt-5 flex flex-wrap justify-center gap-4">
+              {!anuncio && fotos.length < MAX_FOTOS && (
                 <label className="flex h-32 w-32 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary-300 bg-transparent text-center text-sm font-medium text-muted transition hover:border-primary-500 hover:text-primary-700 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100">
                   <input ref={inputFotosRef} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={selecionarFotos} aria-invalid={Boolean(erros.fotos)} aria-describedby={erros.fotos ? "ajuda-fotos erro-fotos" : "ajuda-fotos"} />
                   <IconeCamera />
                   <span className="mt-2">Adicionar foto</span>
                 </label>
               )}
+              {anuncio?.imagens.map((imagem, indice) => (
+                <div key={imagem} className="relative h-32 w-32 overflow-hidden rounded-xl border border-border bg-soft">
+                  <Image src={imagem} alt={`Foto atual ${indice + 1}`} fill unoptimized={imagem.startsWith("http")} className="object-cover" />
+                </div>
+              ))}
               {fotos.map((foto, indice) => (
                 <div key={foto.id} className="group relative h-32 w-32 overflow-hidden rounded-xl border border-border bg-soft">
                   <Image src={foto.url} alt={`Prévia da foto ${indice + 1}`} fill unoptimized className="object-cover" />
@@ -257,11 +264,11 @@ export function PublicarEmprestimoView() {
                 </div>
               ))}
             </div>
-            {erros.fotos && <p id="erro-fotos" className="mt-2 text-sm font-medium text-red-700">{erros.fotos}</p>}
+            {erros.fotos && <p id="erro-fotos" className="mt-2 text-center text-sm font-medium text-red-700">{erros.fotos}</p>}
           </fieldset>
 
           <fieldset className="space-y-7">
-            <legend className="mb-6 text-2xl font-semibold text-foreground">Detalhes</legend>
+            <legend className="mb-6 w-full text-center text-2xl font-semibold text-foreground">Detalhes</legend>
             <div>
               <label htmlFor="titulo" className="mb-2 block text-sm font-semibold">O que é?</label>
               <input ref={tituloRef} id="titulo" name="titulo" value={titulo} maxLength={100} onChange={(event) => { setTitulo(event.target.value); limparErro("titulo"); }} aria-invalid={Boolean(erros.titulo)} aria-describedby={erros.titulo ? "erro-titulo" : "ajuda-titulo"} className={`${campoBase} ${erros.titulo ? "border-red-600" : "border-primary-300"}`} placeholder="Ex.: Furadeira de impacto ou barraca de camping" />
@@ -285,11 +292,11 @@ export function PublicarEmprestimoView() {
               </div>
 
               <fieldset className="rounded-2xl border border-primary-100 bg-primary-50/40 p-4 sm:col-span-2" aria-describedby="ajuda-duracao">
-                <legend className="px-1 text-sm font-semibold">Duração do empréstimo</legend>
-                <p id="ajuda-duracao" className="mb-4 mt-1 text-xs text-muted">Defina por quanto tempo o item poderá ficar emprestado.</p>
+                <legend className="mx-auto px-2 text-center text-sm font-semibold">Limite de duração</legend>
+                <p id="ajuda-duracao" className="mb-4 mt-1 text-center text-xs text-muted">Defina o período máximo que cada reserva poderá ter.</p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="duracao-quantidade" className="mb-2 block text-sm font-medium">Quantidade</label>
+                    <label htmlFor="duracao-quantidade" className="mb-2 block text-sm font-medium">Quantidade máxima</label>
                     <input ref={duracaoQuantidadeRef} id="duracao-quantidade" name="duracaoQuantidade" type="number" inputMode="numeric" min="1" max="9999" step="1" value={duracaoQuantidade} onChange={(event) => { setDuracaoQuantidade(event.target.value); limparErro("duracaoQuantidade"); }} aria-invalid={Boolean(erros.duracaoQuantidade)} aria-describedby={erros.duracaoQuantidade ? "erro-duracao-quantidade ajuda-duracao" : "ajuda-duracao"} className={`${campoBase} ${erros.duracaoQuantidade ? "border-red-600" : "border-primary-300"}`} placeholder="Ex.: 2" />
                     {erros.duracaoQuantidade && <p id="erro-duracao-quantidade" className="mt-2 text-sm font-medium text-red-700">{erros.duracaoQuantidade}</p>}
                   </div>
@@ -297,8 +304,6 @@ export function PublicarEmprestimoView() {
                     <label htmlFor="duracao-unidade" className="mb-2 block text-sm font-medium">Unidade</label>
                     <select ref={duracaoUnidadeRef} id="duracao-unidade" name="duracaoUnidade" value={duracaoUnidade} onChange={(event) => { setDuracaoUnidade(event.target.value as UnidadeDuracao | ""); setUnidadeAlteradaManualmente(Boolean(event.target.value)); limparErro("duracaoUnidade"); }} aria-invalid={Boolean(erros.duracaoUnidade)} aria-describedby={erros.duracaoUnidade ? "erro-duracao-unidade ajuda-duracao" : "ajuda-duracao"} className={`${campoBase} ${erros.duracaoUnidade ? "border-red-600" : "border-primary-300"}`}>
                       <option value="">Selecione...</option>
-                      <option value="minutos">Minutos</option>
-                      <option value="horas">Horas</option>
                       <option value="dias">Dias</option>
                       <option value="semanas">Semanas</option>
                     </select>
@@ -306,15 +311,15 @@ export function PublicarEmprestimoView() {
                   </div>
                 </div>
                 {sugestaoUnidade && duracaoUnidade !== sugestaoUnidade ? (
-                  <button type="button" className="mt-3 text-sm font-medium text-primary-700 underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-500" onClick={() => { setDuracaoUnidade(sugestaoUnidade); setUnidadeAlteradaManualmente(false); if (!duracaoQuantidade) setDuracaoQuantidade("1"); limparErro("duracaoUnidade"); }}>
+                  <button type="button" className="mx-auto mt-3 block text-sm font-medium text-primary-700 underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-500" onClick={() => { setDuracaoUnidade(sugestaoUnidade); setUnidadeAlteradaManualmente(false); if (!duracaoQuantidade) setDuracaoQuantidade("1"); limparErro("duracaoUnidade"); }}>
                     Aplicar sugestão: {UNIDADES_SINGULAR[sugestaoUnidade]}
                   </button>
                 ) : null}
               </fieldset>
 
-              <div className="sm:col-span-2">
+              <div className="mx-auto w-full max-w-sm sm:col-span-2">
                 <label htmlFor="valor-unitario" className="mb-2 block text-sm font-semibold">Valor por {duracaoUnidade ? UNIDADES_SINGULAR[duracaoUnidade] : "unidade"}</label>
-                <div className="relative max-w-sm">
+                <div className="relative">
                   <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">R$</span>
                   <input ref={valorUnitarioRef} id="valor-unitario" name="valorUnitario" type="number" inputMode="decimal" min="0.01" max="21474836.47" step="0.01" value={valorUnitario} disabled={!duracaoUnidade} onChange={(event) => { setValorUnitario(event.target.value); limparErro("valorUnitario"); }} aria-invalid={Boolean(erros.valorUnitario)} aria-describedby={erros.valorUnitario ? "erro-valor-unitario" : "ajuda-valor-unitario"} className={`${campoBase} pl-12 disabled:cursor-not-allowed disabled:bg-soft disabled:opacity-70 ${erros.valorUnitario ? "border-red-600" : "border-primary-300"}`} placeholder={duracaoUnidade ? "0,00" : "Selecione a unidade primeiro"} />
                 </div>
@@ -323,16 +328,16 @@ export function PublicarEmprestimoView() {
               </div>
 
               {resumoDisponivel && duracaoUnidade && valorUnitarioCentavos !== null ? (
-                <aside className="rounded-2xl border border-primary-200 bg-primary-50 p-4 sm:col-span-2" aria-live="polite">
+                <aside className="rounded-2xl border border-primary-200 bg-primary-50 p-4 text-center sm:col-span-2" aria-live="polite">
                   <p className="text-sm text-muted">
                     {quantidadeNumerica} {quantidadeNumerica === 1 ? UNIDADES_SINGULAR[duracaoUnidade] : duracaoUnidade} × {FORMATADOR_BRL.format(valorUnitarioCentavos / 100)} por {UNIDADES_SINGULAR[duracaoUnidade]}
                   </p>
-                  <p className="mt-1 text-lg font-bold text-primary-700">Valor total: {FORMATADOR_BRL.format((quantidadeNumerica * valorUnitarioCentavos) / 100)}</p>
+                  <p className="mt-1 text-lg font-bold text-primary-700">Total no período máximo: {FORMATADOR_BRL.format((quantidadeNumerica * valorUnitarioCentavos) / 100)}</p>
                 </aside>
               ) : null}
 
               <fieldset className="sm:col-span-2" aria-invalid={Boolean(erros.condicao)} aria-describedby={erros.condicao ? "erro-condicao" : undefined}>
-                <legend className="mb-2 text-sm font-semibold">Condição</legend>
+                <legend className="mb-2 w-full text-center text-sm font-semibold">Condição</legend>
                 <div className="grid grid-cols-2 gap-3">
                   <label className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 text-center text-sm transition focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2 ${condicao === "novo_quase_novo" ? "border-primary-700 bg-primary-50 text-primary-700 ring-1 ring-primary-700" : "border-primary-300 bg-surface text-muted hover:border-primary-500"}`}>
                     <input ref={primeiraCondicaoRef} className="sr-only" type="radio" name="condicao" value="novo_quase_novo" checked={condicao === "novo_quase_novo"} onChange={(event) => { setCondicao(event.target.value); limparErro("condicao"); }} />
@@ -356,8 +361,8 @@ export function PublicarEmprestimoView() {
           </fieldset>
 
           <div className="border-t border-border pt-6">
-            <button type="submit" disabled={enviando} className="w-full rounded-xl bg-primary-700 px-5 py-4 font-semibold text-white shadow-sm hover:bg-primary-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60">{enviando ? "Publicando…" : "Publicar empréstimo"}</button>
-            <p className="mt-4 text-center text-xs text-muted">Ao publicar, você concorda com nossos <span className="font-medium">Termos de Uso</span>.</p>
+            <button type="submit" disabled={enviando} className="w-full rounded-xl bg-primary-700 px-5 py-4 font-semibold text-white shadow-sm hover:bg-primary-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60">{enviando ? (anuncio ? "Salvando…" : "Publicando…") : (anuncio ? "Salvar alterações" : "Publicar empréstimo")}</button>
+            {!anuncio ? <p className="mt-4 text-center text-xs text-muted">Ao publicar, você concorda com nossos <span className="font-medium">Termos de Uso</span>.</p> : null}
             <p className="mt-4 text-center text-sm font-medium text-red-700" role="status" aria-live="polite">{status || resultado.erro}</p>
             {resultado.erro.startsWith("Entre na sua conta") ? <p className="mt-2 text-center text-sm"><Link href="/login?retorno=/publicar" className="font-semibold text-primary-700 underline">Ir para o login</Link></p> : null}
           </div>

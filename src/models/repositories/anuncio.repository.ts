@@ -3,6 +3,7 @@
  */
 
 import type { Anuncio, TipoAnuncio } from "@/models/entities/anuncio";
+import type { EmprestimoEdicao } from "@/models/entities/item";
 import type { SessaoUsuario } from "@/models/entities/usuario";
 import { consultarSupabase, urlPublicaStorage } from "@/lib/supabase/rest";
 
@@ -106,6 +107,44 @@ export async function buscarAnunciosDoUsuario(sessao: SessaoUsuario | null): Pro
     sessao.token,
   );
   return registros ? registros.map(normalizar) : null;
+}
+
+export async function buscarEmprestimoDoUsuario(
+  sessao: SessaoUsuario,
+  id: string,
+): Promise<EmprestimoEdicao | null> {
+  const registros = await consultarSupabase<RegistroAnuncio>(
+    `anuncios?select=*,anuncio_imagens(caminho,ordem)&id=eq.${encodeURIComponent(id)}&usuario_id=eq.${sessao.usuarioId}&tipo=eq.emprestimo&limit=1`,
+    sessao.token,
+  );
+  const registro = registros?.[0];
+  if (!registro || !registro.titulo || !registro.categoria || !registro.condicao
+    || !registro.descricao || !registro.valor_unitario_centavos
+    || !registro.duracao_quantidade || !["minutos", "horas", "dias", "semanas"].includes(registro.duracao_unidade ?? "")) return null;
+
+  const imagens = (registro.anuncio_imagens ?? [])
+    .sort((a, b) => a.ordem - b.ordem)
+    .map(({ caminho }) => caminho.startsWith("http") || caminho.startsWith("/") ? caminho : urlPublicaStorage("anuncios", caminho))
+    .filter((caminho): caminho is string => Boolean(caminho));
+  if (!imagens.length && registro.imagem_url) {
+    const imagem = registro.imagem_url.startsWith("http") || registro.imagem_url.startsWith("/")
+      ? registro.imagem_url
+      : urlPublicaStorage("anuncios", registro.imagem_url);
+    if (imagem) imagens.push(imagem);
+  }
+
+  return {
+    id: String(registro.id),
+    tipo: "emprestimo",
+    titulo: registro.titulo,
+    categoria: registro.categoria,
+    condicao: registro.condicao as EmprestimoEdicao["condicao"],
+    descricao: registro.descricao,
+    valorUnitarioCentavos: registro.valor_unitario_centavos,
+    duracaoQuantidade: registro.duracao_quantidade,
+    duracaoUnidade: registro.duracao_unidade as EmprestimoEdicao["duracaoUnidade"],
+    imagens,
+  };
 }
 
 export function anunciosDeDemonstracao(): Anuncio[] {

@@ -103,11 +103,13 @@ export async function criarSolicitacaoEmprestimo(
   sessao: SessaoUsuario,
   anuncioId: string,
   inicioEm: string,
+  duracaoQuantidade: number,
+  duracaoUnidade: string,
 ): Promise<string> {
   const id = await executarRpcSupabase<string>(
     "solicitar_reserva",
     sessao.token,
-    { p_anuncio_id: anuncioId, p_inicio_em: inicioEm },
+    { p_anuncio_id: anuncioId, p_inicio_em: inicioEm, p_duracao_quantidade: duracaoQuantidade, p_duracao_unidade: duracaoUnidade },
   );
   return String(id ?? "");
 }
