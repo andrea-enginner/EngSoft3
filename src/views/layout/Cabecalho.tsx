@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/controllers/auth.actions";
 import { createClient } from "@/lib/supabase/client";
@@ -23,8 +23,26 @@ function rotaEstaAtiva(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+function inscreverHidratacao() {
+  return () => undefined;
+}
+
+function obterSnapshotCliente() {
+  return true;
+}
+
+function obterSnapshotServidor() {
+  return false;
+}
+
 export function Cabecalho({ autenticado }: { autenticado: boolean }) {
-  const pathname = usePathname();
+  const pathnameRecebido = usePathname();
+  const hidratado = useSyncExternalStore(
+    inscreverHidratacao,
+    obterSnapshotCliente,
+    obterSnapshotServidor,
+  );
+  const pathname = hidratado ? pathnameRecebido : "";
   const [usuarioLogado, setUsuarioLogado] = useState(autenticado);
   const [menuAberto, setMenuAberto] = useState(false);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
