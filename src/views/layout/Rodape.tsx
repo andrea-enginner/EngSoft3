@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const LINKS = [
+const LINKS_AUTENTICADOS = [
   { rotulo: "Início", href: "/feed" },
   { rotulo: "Empréstimos", href: "/emprestimos" },
   { rotulo: "Publicar um item", href: "/publicar" },
@@ -12,12 +12,16 @@ const LINKS = [
   { rotulo: "Meu perfil", href: "/perfil" },
 ];
 
+const LINKS_PUBLICOS = [
+  { rotulo: "Explorar itens", href: "/feed" },
+  { rotulo: "Como funciona", href: "/como-funciona" },
+  { rotulo: "Planos", href: "/planos" },
+];
+
 export function Rodape({ autenticado }: { autenticado: boolean }) {
   const pathname = usePathname();
   if (pathname === "/login" || pathname === "/cadastro") return null;
-  const links = autenticado
-    ? LINKS
-    : LINKS.filter(({ href }) => href === "/feed");
+  const links = autenticado ? LINKS_AUTENTICADOS : LINKS_PUBLICOS;
 
   return (
     <footer className="relative mt-16 overflow-hidden border-t border-primary-300/25 bg-[#7054b2] text-white">

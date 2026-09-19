@@ -8,10 +8,16 @@ import { logoutAction } from "@/controllers/auth.actions";
 import { createClient } from "@/lib/supabase/client";
 import { IconeMensagem, IconeSino, IconeTicket } from "@/views/comuns/Icones";
 
-const NAVEGACAO = [
+const NAVEGACAO_AUTENTICADA = [
   { rotulo: "Início", href: "/feed" },
   { rotulo: "Empréstimos", href: "/emprestimos" },
   { rotulo: "Publicar", href: "/publicar" },
+];
+
+const NAVEGACAO_PUBLICA = [
+  { rotulo: "Explorar itens", href: "/feed" },
+  { rotulo: "Como funciona", href: "/como-funciona" },
+  { rotulo: "Planos", href: "/planos" },
 ];
 
 type Perfil = {
@@ -103,9 +109,7 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
   if (pathname === "/login" || pathname === "/cadastro") return null;
 
   const mensagensAtivas = rotaEstaAtiva(pathname, "/mensagens");
-  const navegacao = usuarioLogado
-    ? NAVEGACAO
-    : NAVEGACAO.filter(({ href }) => href === "/feed");
+  const navegacao = usuarioLogado ? NAVEGACAO_AUTENTICADA : NAVEGACAO_PUBLICA;
 
   return (
     <header className="sticky top-0 z-50 border-b border-primary-100/80 bg-surface/90 shadow-[0_10px_30px_-26px_rgba(76,29,149,0.65)] backdrop-blur-xl">
