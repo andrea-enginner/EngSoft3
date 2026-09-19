@@ -10,11 +10,25 @@ import {
 import { formatarDuracao, formatarTarifa, formatarValor } from "@/lib/formatar-emprestimo";
 import type { Emprestimo, StatusEmprestimo } from "@/models/entities/emprestimo";
 import type { ResultadoEmprestimos } from "@/models/repositories/emprestimo.repository";
+import { ModalAvaliacao } from "@/views/avaliacoes/ModalAvaliacao";
 import {
   IconeCheckCirculo,
   IconeRelogio,
   IconeTrocas,
 } from "@/views/comuns/Icones";
+
+/**
+ * Coordena o pop-up de avaliação entre todos os cards da lista: no máximo um
+ * fica aberto por vez (evita empilhar diálogos quando há vários empréstimos
+ * concluídos e ainda não avaliados ao mesmo tempo).
+ */
+type CoordenacaoAvaliacao = {
+  avaliadas: Set<string>;
+  dispensadas: Set<string>;
+  popupAtivo: string | null;
+  abrirPopup: (id: string) => void;
+  fecharPopup: (id: string, avaliado: boolean) => void;
+};
 
 const STATUS: Record<StatusEmprestimo, [string, string]> = {
   andamento: ["Em andamento", "bg-emerald-50 text-emerald-700"],
@@ -110,12 +124,23 @@ function Temporizador({ item, agora }: { item: Emprestimo; agora: number | null 
   );
 }
 
-function CartaoSolicitacao({ item, agora }: { item: Emprestimo; agora: number | null }) {
+function CartaoSolicitacao({ item, agora, avaliacao }: { item: Emprestimo; agora: number | null; avaliacao: CoordenacaoAvaliacao }) {
   const [status, setStatus] = useState(item.status);
   const [devolucaoSolicitadaEm, setDevolucaoSolicitadaEm] = useState(item.devolucaoSolicitadaEm);
   const [recebidoEm, setRecebidoEm] = useState(item.recebidoEm);
   const [erro, setErro] = useState("");
   const [processando, iniciarTransicao] = useTransition();
+
+  const jaAvaliado = avaliacao.avaliadas.has(item.id);
+  const dispensado = avaliacao.dispensadas.has(item.id);
+  const popupAtivo = avaliacao.popupAtivo;
+
+  useEffect(() => {
+    if (status === "concluido" && !jaAvaliado && !dispensado && popupAtivo === null) {
+      avaliacao.abrirPopup(item.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, jaAvaliado, dispensado, popupAtivo]);
 
   const pagamentoAprovado = item.statusPagamento === "aprovado";
   const iniciou = agora !== null && agora >= new Date(item.inicioEm).getTime();
@@ -191,8 +216,21 @@ function CartaoSolicitacao({ item, agora }: { item: Emprestimo; agora: number | 
         {status === "concluido" ? (
           <section className="mt-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-emerald-700"><IconeCheckCirculo className="h-5 w-5" /></span>
-            <div><p className="text-sm font-bold text-emerald-900">Item recebido e empréstimo concluído</p>{recebidoEm ? <p className="mt-1 text-[11px] text-emerald-700">Confirmado em {DATA_HORA.format(new Date(recebidoEm))}</p> : null}</div>
+            <div>
+              <p className="text-sm font-bold text-emerald-900">Item recebido e empréstimo concluído</p>
+              {recebidoEm ? <p className="mt-1 text-[11px] text-emerald-700">Confirmado em {DATA_HORA.format(new Date(recebidoEm))}</p> : null}
+              {jaAvaliado ? <p className="mt-1 text-[11px] text-emerald-700">Você já avaliou {item.pessoa}.</p> : null}
+            </div>
           </section>
+        ) : null}
+
+        {status === "concluido" ? (
+          <ModalAvaliacao
+            solicitacaoId={item.id}
+            nomeAvaliado={item.pessoa}
+            aberto={popupAtivo === item.id}
+            aoFechar={(avaliado) => avaliacao.fecharPopup(item.id, avaliado)}
+          />
         ) : null}
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -213,17 +251,20 @@ function CartaoSolicitacao({ item, agora }: { item: Emprestimo; agora: number | 
   );
 }
 
-function Lista({ titulo, subtitulo, itens, vazio, agora }: { titulo: string; subtitulo: string; itens: Emprestimo[]; vazio: string; agora: number | null }) {
+function Lista({ titulo, subtitulo, itens, vazio, agora, avaliacao }: { titulo: string; subtitulo: string; itens: Emprestimo[]; vazio: string; agora: number | null; avaliacao: CoordenacaoAvaliacao }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
       <header className="border-b border-border px-5 py-4"><h2 className="font-bold text-primary-900">{titulo}</h2><p className="mt-1 text-xs text-muted">{subtitulo}</p></header>
-      <div className="divide-y divide-border px-5">{itens.length ? itens.map((item) => <CartaoSolicitacao key={item.id} item={item} agora={agora} />) : <p className="py-10 text-center text-sm text-muted">{vazio}</p>}</div>
+      <div className="divide-y divide-border px-5">{itens.length ? itens.map((item) => <CartaoSolicitacao key={item.id} item={item} agora={agora} avaliacao={avaliacao} />) : <p className="py-10 text-center text-sm text-muted">{vazio}</p>}</div>
     </section>
   );
 }
 
-export function EmprestimosView({ resultado, erro }: { resultado: ResultadoEmprestimos; erro?: string }) {
+export function EmprestimosView({ resultado, erro, avaliadas }: { resultado: ResultadoEmprestimos; erro?: string; avaliadas: string[] }) {
   const [agora, setAgora] = useState<number | null>(null);
+  const [avaliadasLocais, setAvaliadasLocais] = useState<Set<string>>(() => new Set(avaliadas));
+  const [dispensadas, setDispensadas] = useState<Set<string>>(() => new Set());
+  const [popupAtivo, setPopupAtivo] = useState<string | null>(null);
 
   useEffect(() => {
     const inicio = window.setTimeout(() => setAgora(Date.now()), 0);
@@ -233,6 +274,18 @@ export function EmprestimosView({ resultado, erro }: { resultado: ResultadoEmpre
       window.clearInterval(intervalo);
     };
   }, []);
+
+  const avaliacao: CoordenacaoAvaliacao = {
+    avaliadas: avaliadasLocais,
+    dispensadas,
+    popupAtivo,
+    abrirPopup: (id) => setPopupAtivo((atual) => atual ?? id),
+    fecharPopup: (id, avaliado) => {
+      setPopupAtivo((atual) => (atual === id ? null : atual));
+      if (avaliado) setAvaliadasLocais((atual) => new Set(atual).add(id));
+      else setDispensadas((atual) => new Set(atual).add(id));
+    },
+  };
 
   const recebidas = resultado.dados.filter((item) => item.papel === "dono");
   const enviadas = resultado.dados.filter((item) => item.papel === "interessado");
@@ -246,8 +299,8 @@ export function EmprestimosView({ resultado, erro }: { resultado: ResultadoEmpre
         {[["Solicitações recebidas", recebidas.length], ["Solicitações enviadas", enviadas.length], ["Em andamento", emAndamento], ["Aguardando recebimento", aguardandoRecebimento]].map(([rotulo, valor]) => <article key={String(rotulo)} className="rounded-2xl border border-border bg-surface p-5 shadow-sm"><p className="text-xs text-muted">{rotulo}</p><strong className="mt-1 block text-2xl text-primary-900">{valor}</strong></article>)}
       </section>
       <div className="grid items-start gap-5 lg:grid-cols-2">
-        <Lista titulo="Solicitações recebidas" subtitulo="Reservas e devoluções dos seus itens." itens={recebidas} vazio="Nenhuma solicitação recebida." agora={agora} />
-        <Lista titulo="Solicitações enviadas" subtitulo="Itens que você solicitou e precisa devolver." itens={enviadas} vazio="Nenhuma solicitação enviada." agora={agora} />
+        <Lista titulo="Solicitações recebidas" subtitulo="Reservas e devoluções dos seus itens." itens={recebidas} vazio="Nenhuma solicitação recebida." agora={agora} avaliacao={avaliacao} />
+        <Lista titulo="Solicitações enviadas" subtitulo="Itens que você solicitou e precisa devolver." itens={enviadas} vazio="Nenhuma solicitação enviada." agora={agora} avaliacao={avaliacao} />
       </div>
     </>}
   </main>;

@@ -1,14 +1,14 @@
 /**
- * Camada MODEL — de onde vêm as avaliações recebidas pelo usuário.
+ * Camada MODEL — de onde vêm e para onde vão as avaliações de usuário.
  *
- * A tabela ainda não é alimentada por nenhuma tela: a consulta existe para que
- * a aba "Avaliações" e a nota de reputação passem a funcionar assim que o
- * histórico começar a ser gravado, sem mexer nas camadas de cima.
+ * A escrita passa sempre pela RPC `avaliar_usuario` (security definer): quem
+ * é "o outro lado" do empréstimo é decidido no banco, então este repositório
+ * nunca precisa saber o id de quem está sendo avaliado.
  */
 
 import type { Avaliacao } from "@/models/entities/avaliacao";
 import type { SessaoUsuario } from "@/models/entities/usuario";
-import { consultarSupabase } from "@/lib/supabase/rest";
+import { consultarSupabase, executarRpcSupabase } from "@/lib/supabase/rest";
 
 type RegistroAvaliacao = {
   id: string | number;
@@ -38,4 +38,33 @@ export async function buscarAvaliacoesDoUsuario(sessao: SessaoUsuario | null): P
     sessao.token,
   );
   return registros ? registros.map(normalizar) : [];
+}
+
+/**
+ * Empréstimos (solicitação por solicitação) que o usuário logado já avaliou
+ * como autor. Usado só para decidir se o pop-up de avaliação deve aparecer —
+ * não precisa de RPC nova, a policy de select pública já cobre esta consulta.
+ */
+export async function buscarSolicitacoesAvaliadas(sessao: SessaoUsuario | null): Promise<Set<string>> {
+  if (!sessao) return new Set();
+
+  const registros = await consultarSupabase<{ solicitacao_id: string }>(
+    `avaliacoes?select=solicitacao_id&autor_id=eq.${sessao.usuarioId}`,
+    sessao.token,
+  );
+  return new Set((registros ?? []).map((registro) => registro.solicitacao_id));
+}
+
+export async function criarAvaliacao(
+  sessao: SessaoUsuario,
+  solicitacaoId: string,
+  nota: number,
+  comentario: string,
+): Promise<string> {
+  const id = await executarRpcSupabase<string>(
+    "avaliar_usuario",
+    sessao.token,
+    { p_solicitacao_id: solicitacaoId, p_nota: nota, p_comentario: comentario },
+  );
+  return String(id ?? "");
 }
