@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { obterSolicitacoesAvaliadas } from "@/controllers/avaliacao.controller";
 import { obterMeusEmprestimos } from "@/controllers/emprestimo.controller";
 import { sessaoAtual } from "@/lib/supabase/sessao";
 import type { ResultadoEmprestimos } from "@/models/repositories/emprestimo.repository";
@@ -19,5 +20,6 @@ export default async function EmprestimosPage() {
     resultado = { dados: [], fonte: "supabase", requerLogin: false };
     erro = "Não foi possível carregar as solicitações agora.";
   }
-  return <EmprestimosView resultado={resultado} erro={erro} />;
+  const avaliadas = await obterSolicitacoesAvaliadas().catch(() => []);
+  return <EmprestimosView resultado={resultado} erro={erro} avaliadas={avaliadas} />;
 }
