@@ -87,6 +87,16 @@ export type ResultadoEmprestimos = {
   requerLogin: boolean;
 };
 
+export type SolicitacaoCriada = {
+  solicitacaoId: string;
+  conversaId: string;
+};
+
+type RegistroSolicitacaoCriada = {
+  solicitacao_id: string;
+  conversa_id: string;
+};
+
 export async function buscarMeusEmprestimos(sessao: SessaoUsuario | null): Promise<ResultadoEmprestimos> {
   if (!credenciaisSupabase()) return { dados: DEMONSTRACAO, fonte: "demonstracao", requerLogin: false };
   if (!sessao) return { dados: [], fonte: "supabase", requerLogin: true };
@@ -105,13 +115,17 @@ export async function criarSolicitacaoEmprestimo(
   inicioEm: string,
   duracaoQuantidade: number,
   duracaoUnidade: string,
-): Promise<string> {
-  const id = await executarRpcSupabase<string>(
+): Promise<SolicitacaoCriada> {
+  const registros = await executarRpcSupabase<RegistroSolicitacaoCriada[]>(
     "solicitar_reserva",
     sessao.token,
     { p_anuncio_id: anuncioId, p_inicio_em: inicioEm, p_duracao_quantidade: duracaoQuantidade, p_duracao_unidade: duracaoUnidade },
   );
-  return String(id ?? "");
+  const registro = registros[0];
+  if (!registro?.solicitacao_id || !registro.conversa_id) {
+    throw new Error("A solicitação não retornou uma conversa válida.");
+  }
+  return { solicitacaoId: registro.solicitacao_id, conversaId: registro.conversa_id };
 }
 
 export async function registrarDevolucaoEmprestimo(
