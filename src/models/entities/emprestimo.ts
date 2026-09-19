@@ -22,6 +22,8 @@ export type Emprestimo = {
   inicioEm: string;
   fimEm: string;
   criadoEm: string;
+  devolucaoSolicitadaEm?: string;
+  recebidoEm?: string;
   status: StatusEmprestimo;
   valorUnitarioCentavos: number;
   valorTotalCentavos: number;
