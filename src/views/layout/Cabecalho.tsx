@@ -80,7 +80,7 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
       subscription.unsubscribe();
       window.removeEventListener("ciclo:saldo-cupons", atualizarSaldo);
     };
-  }, []);
+  }, [pathname]);
 
   if (pathname === "/login" || pathname === "/cadastro") return null;
 

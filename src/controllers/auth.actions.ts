@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   cadastrar,
@@ -20,6 +21,7 @@ export async function loginAction(formData: FormData) {
 
   await login(email, senha);
 
+  revalidatePath("/", "layout");
   redirect(destinoSeguro(formData.get("next")));
 }
 
@@ -50,10 +52,12 @@ export async function cadastrarAction(formData: FormData) {
     confirmarSenha,
   });
 
+  revalidatePath("/", "layout");
   redirect("/feed");
 }
 
 export async function logoutAction() {
   await logout();
+  revalidatePath("/", "layout");
   redirect("/login");
 }

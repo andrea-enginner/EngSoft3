@@ -27,7 +27,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-BR" className="h-full antialiased">
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        <Cabecalho autenticado={autenticado} />
+        <Cabecalho key={autenticado ? "logado" : "visitante"} autenticado={autenticado} />
         <div className="flex-1">{children}</div>
         <Rodape autenticado={autenticado} />
       </body>
