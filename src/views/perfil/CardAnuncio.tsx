@@ -60,16 +60,22 @@ export function CardAnuncio({ anuncio }: { anuncio: Anuncio }) {
         </p>
         {anuncio.valorUnitarioCentavos && anuncio.duracaoUnidade ? <p className="mt-2 text-sm font-semibold text-primary-700">{formatarTarifa(anuncio.valorUnitarioCentavos, anuncio.duracaoUnidade)}</p> : null}
 
-        <div className="mt-auto flex items-center justify-between border-t border-border pt-3 text-[12px] text-muted">
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3 text-[12px] text-muted">
           <span>{formatarTempoRelativo(anuncio.publicadoEm)}</span>
-
-          <Link
-            href={`/publicar?editar=${anuncio.id}`}
-            aria-label={`Editar anúncio ${anuncio.titulo}`}
-            className="rounded-lg p-1.5 text-primary-500 hover:bg-primary-50 hover:text-primary-700"
-          >
-            <IconeLapis className="h-4 w-4" />
-          </Link>
+          <span className="flex items-center gap-1.5">
+            {anuncio.ativo && anuncio.tipo === "emprestimo" ? (
+              <Link href={`/emprestimos/impulsionar?anuncio=${anuncio.id}`} className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-primary-700 hover:bg-primary-700 hover:text-white" aria-label={`Impulsionar anúncio ${anuncio.titulo}`}>
+                ↗ Impulsionar
+              </Link>
+            ) : null}
+            <Link
+              href={`/publicar?editar=${anuncio.id}`}
+              aria-label={`Editar anúncio ${anuncio.titulo}`}
+              className="rounded-lg p-1.5 text-primary-500 hover:bg-primary-50 hover:text-primary-700"
+            >
+              <IconeLapis className="h-4 w-4" />
+            </Link>
+          </span>
         </div>
       </div>
     </article>

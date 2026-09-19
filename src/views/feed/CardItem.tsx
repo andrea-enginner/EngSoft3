@@ -59,6 +59,12 @@ export function CardItem({ item }: { item: ItemFeed }) {
           {tipo.rotulo}
         </span>
 
+        {item.impulsionado ? (
+          <span className="absolute bottom-3 left-3 rounded-full bg-primary-900 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-white shadow-md">
+            ✦ Destaque
+          </span>
+        ) : null}
+
         <span className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-muted shadow-sm">
           <IconeCoracao
             className="h-4 w-4"

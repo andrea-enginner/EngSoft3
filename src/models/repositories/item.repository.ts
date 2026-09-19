@@ -23,6 +23,7 @@ type RegistroPublico = {
   criado_em: string; usuario_id: string; dono_nome: string;
   dono_avatar: string | null; cidade: string | null; estado: string | null;
   avaliacao: number | string; imagens: string[] | null;
+  impulsionado?: boolean | null; impulsionado_ate?: string | null;
 };
 
 function urlImagem(caminho: string): string {
@@ -44,7 +45,10 @@ function normalizar(registro: RegistroPublico): AnuncioDetalhe {
     duracaoQuantidade: registro.duracao_quantidade,
     duracaoUnidade: ["minutos", "horas", "dias", "semanas"].includes(registro.duracao_unidade ?? "")
       ? registro.duracao_unidade as AnuncioDetalhe["duracaoUnidade"] : null,
-    publicadoEm: registro.criado_em, ativo: true, avaliacao, aceitaPropostas: false,
+    publicadoEm: registro.criado_em, ativo: true, avaliacao,
+    impulsionado: registro.impulsionado ?? false,
+    impulsionadoAte: registro.impulsionado_ate ?? null,
+    aceitaPropostas: false,
     dono: { id: registro.usuario_id, nome: registro.dono_nome, avatar: registro.dono_avatar ?? undefined, avaliacao, quantidadeEmprestimos: 0, confiavel: avaliacao >= 4.5 },
   };
 }

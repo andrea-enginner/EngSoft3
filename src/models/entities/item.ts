@@ -17,6 +17,8 @@ export type AnuncioResumo = {
   publicadoEm: string;
   ativo: boolean;
   avaliacao?: number;
+  impulsionado?: boolean;
+  impulsionadoAte?: string | null;
 };
 
 export type DonoAnuncio = {

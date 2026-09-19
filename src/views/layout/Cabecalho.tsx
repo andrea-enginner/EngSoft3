@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/controllers/auth.actions";
 import { createClient } from "@/lib/supabase/client";
-import { IconeMensagem, IconeSino } from "@/views/comuns/Icones";
+import { IconeMensagem, IconeSino, IconeTicket } from "@/views/comuns/Icones";
 
 const NAVEGACAO = [
   { rotulo: "Início", href: "/feed" },
@@ -28,6 +28,7 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
   const [usuarioLogado, setUsuarioLogado] = useState(autenticado);
   const [menuAberto, setMenuAberto] = useState(false);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
+  const [cupons, setCupons] = useState<number | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -40,16 +41,24 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
       setUsuarioLogado(Boolean(user));
       if (!user) {
         setPerfil(null);
+        setCupons(null);
         return;
       }
 
-      const { data } = await supabase
-        .from("perfis")
-        .select("nome, avatar_url")
-        .eq("id", user.id)
-        .single();
+      const [{ data }, { data: saldo }] = await Promise.all([
+        supabase.from("perfis").select("nome, avatar_url").eq("id", user.id).single(),
+        supabase.rpc("obter_saldo_cupons"),
+      ]);
 
       if (ativo && data) setPerfil(data);
+      if (ativo && Array.isArray(saldo) && saldo[0]) {
+        setCupons(Math.max(0, Number(saldo[0].cupons_disponiveis ?? 0)));
+      }
+    }
+
+    function atualizarSaldo(evento: Event) {
+      const valor = (evento as CustomEvent<number>).detail;
+      if (Number.isFinite(valor)) setCupons(Math.max(0, valor));
     }
 
     void carregarUsuario();
@@ -59,14 +68,17 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
         setUsuarioLogado(Boolean(session?.user));
         if (!session?.user) {
           setPerfil(null);
+          setCupons(null);
           setMenuAberto(false);
         }
       },
     );
+    window.addEventListener("ciclo:saldo-cupons", atualizarSaldo);
 
     return () => {
       ativo = false;
       subscription.unsubscribe();
+      window.removeEventListener("ciclo:saldo-cupons", atualizarSaldo);
     };
   }, []);
 
@@ -103,6 +115,13 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
           {usuarioLogado ? (
             <>
+              {cupons !== null ? (
+                <Link href="/perfil" aria-label={`${cupons} cupons disponíveis`} title="Cupons de impulsionamento" className="inline-flex h-10 items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 text-xs font-bold text-primary-700 shadow-sm hover:-translate-y-0.5 hover:border-primary-300 hover:bg-primary-100 sm:px-3">
+                  <IconeTicket className="h-4 w-4" />
+                  <span>{cupons}</span>
+                  <span className="hidden xl:inline">cupons</span>
+                </Link>
+              ) : null}
               <span role="img" aria-label="Notificações" title="Notificações" className="relative hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-muted shadow-sm sm:flex">
                 <IconeSino className="h-[21px] w-[21px]" />
                 <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full bg-accent ring-2 ring-surface" />

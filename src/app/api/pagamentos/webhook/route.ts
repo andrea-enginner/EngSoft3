@@ -1,4 +1,5 @@
 import { processarEventoPagamento } from "@/models/services/pagamento.service";
+import { processarEventoAssinatura } from "@/models/services/impulsionamento.service";
 import { validarEventoStripe } from "@/models/repositories/stripe.repository";
 
 export const runtime = "nodejs";
@@ -14,7 +15,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    await processarEventoPagamento(evento);
+    const processadoComoAssinatura = await processarEventoAssinatura(evento);
+    if (!processadoComoAssinatura) {
+      await processarEventoPagamento(evento);
+    }
     return Response.json({ recebido: true });
   } catch (erro) {
     console.error("Falha ao processar webhook do Stripe", erro);
