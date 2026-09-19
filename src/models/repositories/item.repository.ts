@@ -1,4 +1,9 @@
-import { credenciaisSupabase, executarRpc, urlPublicaStorage } from "@/lib/supabase/rest";
+import {
+  atualizarSupabase,
+  credenciaisSupabase,
+  executarRpc,
+  urlPublicaStorage,
+} from "@/lib/supabase/rest";
 import type { AnuncioDetalhe, AnuncioResumo, TipoAnuncio } from "@/models/entities/item";
 
 const DEMONSTRACAO: AnuncioDetalhe[] = [
@@ -62,4 +67,17 @@ async function carregar(id?: string): Promise<AnuncioDetalhe[]> {
 export async function listarItensAtivos(): Promise<AnuncioResumo[]> { return carregar(); }
 export async function buscarItemAtivoPorId(id: string): Promise<AnuncioDetalhe | null> {
   return (await carregar(id)).find((item) => item.id === id) ?? null;
+}
+
+export async function desativarAnuncio(
+  anuncioId: string,
+  token: string,
+): Promise<void> {
+  await atualizarSupabase(
+    `anuncios?id=eq.${anuncioId}`,
+    token,
+    {
+      ativo: false,
+    },
+  );
 }
