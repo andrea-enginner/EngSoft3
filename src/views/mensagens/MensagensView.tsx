@@ -103,7 +103,11 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
 
   useEffect(() => {
     if (!conversa || painel.fonte !== "supabase") return;
-    void marcarConversaComoLidaAction(conversa.id);
+    void marcarConversaComoLidaAction(conversa.id).then(() => {
+      window.dispatchEvent(new CustomEvent("ciclo:mensagens-lidas", {
+        detail: { conversaId: conversa.id },
+      }));
+    });
   }, [conversa, painel.fonte]);
 
   useEffect(() => {
