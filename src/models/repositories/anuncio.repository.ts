@@ -24,6 +24,7 @@ const ANUNCIOS_DEMONSTRACAO: Anuncio[] = [
     duracaoUnidade: null,
     publicadoEm: new Date(Date.now() - 2 * DIA).toISOString(),
     ativo: true,
+    naListaDesejos: false,
   },
   {
     id: "demo-2",
@@ -39,6 +40,7 @@ const ANUNCIOS_DEMONSTRACAO: Anuncio[] = [
     duracaoUnidade: "dias",
     publicadoEm: new Date(Date.now() - 8 * DIA).toISOString(),
     ativo: true,
+    naListaDesejos: false,
   },
   {
     id: "demo-3",
@@ -54,6 +56,7 @@ const ANUNCIOS_DEMONSTRACAO: Anuncio[] = [
     duracaoUnidade: "semanas",
     publicadoEm: new Date(Date.now() - 40 * DIA).toISOString(),
     ativo: false,
+    naListaDesejos: false,
   },
 ];
 
@@ -96,6 +99,7 @@ function normalizar(registro: RegistroAnuncio): Anuncio {
       ? registro.duracao_unidade as Anuncio["duracaoUnidade"] : null,
     publicadoEm: registro.criado_em ?? new Date().toISOString(),
     ativo: registro.ativo ?? true,
+    naListaDesejos: false,
   };
 }
 
