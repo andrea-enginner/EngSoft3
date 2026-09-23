@@ -58,13 +58,28 @@ function normalizar(registro: RegistroPublico): AnuncioDetalhe {
   };
 }
 
-async function carregar(id?: string): Promise<AnuncioDetalhe[]> {
+async function carregar(id?: string, termo?: string): Promise<AnuncioDetalhe[]> {
   if (id && credenciaisSupabase() && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return [];
-  const registros = await executarRpc<RegistroPublico>("listar_anuncios_publicos", id ? { p_id: id } : {}, null);
-  return registros ? registros.map(normalizar) : DEMONSTRACAO;
+
+  const termoNormalizado = termo?.trim();
+  const parametros: Record<string, unknown> = {};
+  if (id) parametros.p_id = id;
+  if (termoNormalizado) parametros.p_termo = termoNormalizado;
+
+  const registros = await executarRpc<RegistroPublico>("listar_anuncios_publicos", parametros, null);
+  if (registros) return registros.map(normalizar);
+
+  // Sem Supabase configurado, aplica o mesmo filtro por nome no fallback de
+  // demonstração, pra não deixar a busca "quebrada" nesse modo.
+  if (!termoNormalizado) return DEMONSTRACAO;
+  const termoComparavel = termoNormalizado.toLowerCase();
+  return DEMONSTRACAO.filter((item) => item.titulo.toLowerCase().includes(termoComparavel));
 }
 
-export async function listarItensAtivos(): Promise<AnuncioResumo[]> { return carregar(); }
+export async function listarItensAtivos(termo?: string): Promise<AnuncioResumo[]> {
+  return carregar(undefined, termo);
+}
+
 export async function buscarItemAtivoPorId(id: string): Promise<AnuncioDetalhe | null> {
   return (await carregar(id)).find((item) => item.id === id) ?? null;
 }
