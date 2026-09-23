@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Mensagem, PainelMensagens, StatusSolicitacao, TipoMensagem } from "@/models/entities/mensagem";
 import { CartaoSolicitacao } from "@/views/mensagens/CartaoSolicitacao";
 import { ListaConversas } from "@/views/mensagens/ListaConversas";
+import { ReputacaoInterlocutor } from "@/views/mensagens/ReputacaoInterlocutor";
 import { IconeAnexo, IconeBusca, IconeEmoji, IconeMensagem, IconeOrdenacao } from "@/views/comuns/Icones";
 
 type Props = {
@@ -294,7 +295,16 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-200 to-primary-300 text-sm font-bold text-primary-900">{iniciais(conversa.interlocutorNome)}</span>
                 <div className="min-w-0">
                   <h2 className="truncate text-sm font-bold text-slate-900 sm:text-base">{conversa.interlocutorNome}</h2>
-                  <p className="flex items-center gap-1.5 text-xs text-emerald-600"><span className="h-2 w-2 rounded-full bg-emerald-500" />Conversa em tempo real</p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+                    <p className="flex items-center gap-1.5 text-emerald-600"><span className="h-2 w-2 rounded-full bg-emerald-500" />Conversa em tempo real</p>
+                    <ReputacaoInterlocutor
+                      reputacao={conversa.reputacaoInterlocutor}
+                      rotulo={conversa.usuarioEProprietario
+                        ? "Reputação do interessado"
+                        : "Reputação do proprietário"}
+                      mostrarTotal
+                    />
+                  </div>
                 </div>
                 <Link href={`/itens/${conversa.anuncioId}`} className="ml-auto hidden max-w-[270px] items-center gap-3 rounded-lg border border-border p-2 hover:border-primary-300 sm:flex">
                   {conversa.imagemItem?.startsWith("/") ? <Image src={conversa.imagemItem} alt="" width={48} height={40} className="h-10 w-12 rounded-md object-cover" /> : <span className="grid h-10 w-12 place-items-center rounded-md bg-primary-50 text-xl">▤</span>}

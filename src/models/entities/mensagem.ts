@@ -1,3 +1,5 @@
+import type { Reputacao } from "@/models/entities/avaliacao";
+
 export type TipoMensagem = "texto" | "solicitacao" | "sistema";
 
 export type StatusSolicitacao =
@@ -32,6 +34,7 @@ export type ConversaResumo = {
   naoLidas: number;
   status: StatusSolicitacao;
   usuarioEProprietario: boolean;
+  reputacaoInterlocutor: Reputacao;
 };
 
 export type PainelMensagens = {
