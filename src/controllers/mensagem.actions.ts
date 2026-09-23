@@ -8,6 +8,7 @@ import type {
   ResultadoSolicitacao,
 } from "@/models/entities/mensagem";
 import {
+  enviarAnexo,
   iniciarConversa,
   enviarMensagem,
   marcarConversaComoLida,
@@ -41,6 +42,29 @@ export async function enviarMensagemAction(
 ): Promise<ResultadoMensagem> {
   try {
     const mensagem = await enviarMensagem(await sessaoAtual(), conversaId, conteudo);
+    revalidatePath(`/mensagens/${conversaId}`);
+    return { sucesso: true, mensagem };
+  } catch (erro) {
+    return { sucesso: false, erro: mensagemDeErro(erro) };
+  }
+}
+
+export async function enviarAnexoAction(
+  conversaId: string,
+  dados: FormData,
+): Promise<ResultadoMensagem> {
+  try {
+    const arquivo = dados.get("arquivo");
+    if (!(arquivo instanceof File)) {
+      throw new MensagemInvalidaError("Selecione um arquivo para enviar.");
+    }
+
+    const mensagem = await enviarAnexo(
+      await sessaoAtual(),
+      conversaId,
+      arquivo,
+      String(dados.get("legenda") ?? ""),
+    );
     revalidatePath(`/mensagens/${conversaId}`);
     return { sucesso: true, mensagem };
   } catch (erro) {

@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
+  enviarAnexoAction,
   enviarMensagemAction,
   marcarConversaComoLidaAction,
   responderSolicitacaoAction,
@@ -27,7 +28,21 @@ type RegistroRealtimeMensagem = {
   tipo: string;
   criada_em: string;
   lida_em: string | null;
+  arquivo_nome: string | null;
+  arquivo_caminho: string | null;
+  arquivo_tipo: string | null;
+  arquivo_tamanho: number | string | null;
 };
+
+const VINTE_MIB = 20 * 1024 * 1024;
+const TIPOS_ANEXO = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+const ACCEPT_ANEXO = Array.from(TIPOS_ANEXO).join(",");
 
 function iniciais(nome: string) {
   return nome.split(/\s+/).slice(0, 2).map((parte) => parte[0]).join("").toUpperCase();
@@ -51,8 +66,15 @@ function doMesmoDia(a: string, b: string) {
   return new Date(a).toDateString() === new Date(b).toDateString();
 }
 
+function formatarTamanho(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KiB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
+}
+
 function normalizarRealtime(registro: RegistroRealtimeMensagem): Mensagem {
-  const tipos: TipoMensagem[] = ["texto", "solicitacao", "sistema"];
+  const tipos: TipoMensagem[] = ["texto", "solicitacao", "sistema", "arquivo"];
+  const tamanho = Number(registro.arquivo_tamanho);
   return {
     id: registro.id,
     conversaId: registro.conversa_id,
@@ -61,6 +83,17 @@ function normalizarRealtime(registro: RegistroRealtimeMensagem): Mensagem {
     tipo: tipos.includes(registro.tipo as TipoMensagem) ? (registro.tipo as TipoMensagem) : "texto",
     criadaEm: registro.criada_em,
     lidaEm: registro.lida_em,
+    arquivo: registro.arquivo_nome
+      && registro.arquivo_caminho
+      && registro.arquivo_tipo
+      && Number.isFinite(tamanho)
+      ? {
+          nome: registro.arquivo_nome,
+          caminho: registro.arquivo_caminho,
+          tipoMime: registro.arquivo_tipo,
+          tamanho,
+        }
+      : null,
   };
 }
 
@@ -75,6 +108,7 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
   const [filtro, setFiltro] = useState("todas");
   const [ordemRecente, setOrdemRecente] = useState(true);
   const [texto, setTexto] = useState("");
+  const [arquivo, setArquivo] = useState<File | null>(null);
   const [mensagens, setMensagens] = useState(painel.mensagens);
   const [conversas, setConversas] = useState(() =>
     painel.conversas.map((item) =>
@@ -85,8 +119,11 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
   const [erro, setErro] = useState("");
   const [mostrarEmojis, setMostrarEmojis] = useState(false);
   const [enviando, iniciarEnvio] = useTransition();
+  const [enviandoAnexo, iniciarEnvioAnexo] = useTransition();
   const [respondendo, iniciarResposta] = useTransition();
   const fimRef = useRef<HTMLDivElement>(null);
+  const inputAnexoRef = useRef<HTMLInputElement>(null);
+  const urlsAnexosDemoRef = useRef<string[]>([]);
   const conversa = painel.conversaAtiva;
 
   function refletirMensagemNaLista(nova: Mensagem) {
@@ -102,8 +139,17 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
   }, [mensagens]);
 
   useEffect(() => {
+    const urls = urlsAnexosDemoRef.current;
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, []);
+
+  useEffect(() => {
     if (!conversa || painel.fonte !== "supabase") return;
-    void marcarConversaComoLidaAction(conversa.id);
+    void marcarConversaComoLidaAction(conversa.id).then(() => {
+      window.dispatchEvent(new CustomEvent("ciclo:mensagens-lidas", {
+        detail: { conversaId: conversa.id },
+      }));
+    });
   }, [conversa, painel.fonte]);
 
   useEffect(() => {
@@ -176,9 +222,53 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
   function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     const conteudo = texto.trim();
-    if (!conteudo) return;
+    if (!conteudo && !arquivo) return;
     if (!conversa) return;
     setErro("");
+
+    if (arquivo) {
+      if (painel.fonte === "demonstracao") {
+        const caminho = URL.createObjectURL(arquivo);
+        urlsAnexosDemoRef.current.push(caminho);
+        const nova: Mensagem = {
+          id: crypto.randomUUID(),
+          conversaId: conversa.id,
+          remetenteId: painel.usuarioId,
+          conteudo: conteudo || `📎 ${arquivo.name}`,
+          tipo: "arquivo",
+          criadaEm: new Date().toISOString(),
+          lidaEm: null,
+          arquivo: {
+            nome: arquivo.name,
+            caminho,
+            tipoMime: arquivo.type,
+            tamanho: arquivo.size,
+          },
+        };
+        setMensagens((atuais) => adicionarSemDuplicar(atuais, nova));
+        refletirMensagemNaLista(nova);
+        setArquivo(null);
+        setTexto("");
+        return;
+      }
+
+      const arquivoSelecionado = arquivo;
+      iniciarEnvioAnexo(async () => {
+        const dados = new FormData();
+        dados.set("arquivo", arquivoSelecionado);
+        dados.set("legenda", conteudo);
+        const resultado = await enviarAnexoAction(conversa.id, dados);
+        if (!resultado.sucesso) {
+          setErro(resultado.erro);
+          return;
+        }
+        setMensagens((atuais) => adicionarSemDuplicar(atuais, resultado.mensagem));
+        refletirMensagemNaLista(resultado.mensagem);
+        setArquivo(null);
+        setTexto("");
+      });
+      return;
+    }
 
     if (painel.fonte === "demonstracao") {
       const nova: Mensagem = {
@@ -189,6 +279,7 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
         tipo: "texto",
         criadaEm: new Date().toISOString(),
         lidaEm: null,
+        arquivo: null,
       };
       setMensagens((atuais) => adicionarSemDuplicar(atuais, nova));
       refletirMensagemNaLista(nova);
@@ -206,6 +297,24 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
       refletirMensagemNaLista(resultado.mensagem);
       setTexto("");
     });
+  }
+
+  function selecionarArquivo(evento: ChangeEvent<HTMLInputElement>) {
+    const selecionado = evento.target.files?.[0] ?? null;
+    evento.target.value = "";
+    setErro("");
+    if (!selecionado) return;
+    if (!TIPOS_ANEXO.has(selecionado.type)) {
+      setArquivo(null);
+      setErro("Formato não permitido. Envie JPEG, PNG, WebP, PDF ou DOCX.");
+      return;
+    }
+    if (selecionado.size === 0 || selecionado.size > VINTE_MIB) {
+      setArquivo(null);
+      setErro("O arquivo deve ter no máximo 20 MiB e não pode estar vazio.");
+      return;
+    }
+    setArquivo(selecionado);
   }
 
   function inserirEmoji(emoji: string) {
@@ -233,6 +342,7 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
         tipo: "sistema",
         criadaEm: new Date().toISOString(),
         lidaEm: null,
+        arquivo: null,
       }));
       return;
     }
@@ -315,7 +425,37 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
                       ) : (
                         <div className={`mb-3 flex ${minha ? "justify-end" : "justify-start"}`}>
                           <article className={`max-w-[82%] rounded-xl px-4 py-3 text-sm shadow-sm sm:max-w-[68%] ${minha ? "rounded-br-sm bg-[#f1eaf5]" : "rounded-bl-sm bg-[#f5f0f7]"}`}>
-                            <p className="whitespace-pre-wrap leading-5 text-slate-700">{mensagem.conteudo}</p>
+                            {mensagem.tipo === "arquivo" && mensagem.arquivo ? (
+                              <>
+                                <a
+                                  href={mensagem.arquivo.caminho.startsWith("blob:")
+                                    ? mensagem.arquivo.caminho
+                                    : `/api/mensagens/anexos/${mensagem.id}`}
+                                  download={mensagem.arquivo.nome}
+                                  className="flex min-w-0 items-center gap-3 rounded-lg border border-primary-200 bg-white/80 p-3 text-left outline-none hover:border-primary-400 hover:bg-white focus-visible:ring-2 focus-visible:ring-primary-500"
+                                  aria-label={`Baixar ${mensagem.arquivo.nome}`}
+                                >
+                                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary-100 text-primary-700">
+                                    <IconeAnexo className="h-5 w-5" />
+                                  </span>
+                                  <span className="min-w-0">
+                                    <strong className="block truncate text-xs text-slate-800">
+                                      {mensagem.arquivo.nome}
+                                    </strong>
+                                    <span className="mt-0.5 block text-[10px] text-muted">
+                                      {formatarTamanho(mensagem.arquivo.tamanho)} · Baixar arquivo
+                                    </span>
+                                  </span>
+                                </a>
+                                {mensagem.conteudo !== `📎 ${mensagem.arquivo.nome}` ? (
+                                  <p className="mt-2 whitespace-pre-wrap leading-5 text-slate-700">
+                                    {mensagem.conteudo}
+                                  </p>
+                                ) : null}
+                              </>
+                            ) : (
+                              <p className="whitespace-pre-wrap leading-5 text-slate-700">{mensagem.conteudo}</p>
+                            )}
                             <time dateTime={mensagem.criadaEm} className="mt-1 block text-right text-[10px] text-slate-400">{hora(mensagem.criadaEm)}{minha ? <span className="ml-1 font-bold text-primary-600">✓✓</span> : null}</time>
                           </article>
                         </div>
@@ -329,17 +469,54 @@ export function MensagensView({ painel, mostrarConversaNoMobile = false }: Props
 
               <footer className="border-t border-border p-3 sm:p-4">
                 {erro ? <p className="mb-2 text-xs text-red-600" role="alert">{erro}</p> : null}
+                {arquivo ? (
+                  <div className="mb-3 flex items-center gap-3 rounded-xl border border-primary-200 bg-primary-50/60 p-3" role="status">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white text-primary-700 shadow-sm">
+                      <IconeAnexo className="h-5 w-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <strong className="block truncate text-xs text-slate-800">{arquivo.name}</strong>
+                      <span className="mt-0.5 block text-[10px] text-muted">{formatarTamanho(arquivo.size)}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setArquivo(null)}
+                      disabled={enviandoAnexo}
+                      aria-label={`Remover ${arquivo.name}`}
+                      className="grid h-8 w-8 place-items-center rounded-full text-lg text-muted hover:bg-white hover:text-red-600 disabled:cursor-wait disabled:opacity-50"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : null}
                 <form onSubmit={enviar} className="flex items-end gap-2">
-                  <button type="button" disabled title="Anexos estarão disponíveis em breve" aria-label="Anexar arquivo — indisponível" className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-slate-500 disabled:cursor-not-allowed disabled:opacity-70"><IconeAnexo className="h-6 w-6" /></button>
+                  <input
+                    ref={inputAnexoRef}
+                    type="file"
+                    accept={ACCEPT_ANEXO}
+                    onChange={selecionarArquivo}
+                    className="sr-only"
+                    tabIndex={-1}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => inputAnexoRef.current?.click()}
+                    disabled={enviando || enviandoAnexo}
+                    title="Anexar arquivo (máximo de 20 MiB)"
+                    aria-label="Anexar arquivo"
+                    className={`grid h-11 w-11 shrink-0 place-items-center rounded-lg outline-none hover:bg-primary-50 hover:text-primary-700 focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-wait disabled:opacity-50 ${arquivo ? "bg-primary-100 text-primary-700" : "text-slate-500"}`}
+                  >
+                    <IconeAnexo className="h-6 w-6" />
+                  </button>
                   <label className="flex min-h-11 flex-1 items-end rounded-lg border border-border pl-3 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100">
                     <span className="sr-only">Digite sua mensagem</span>
-                    <textarea value={texto} onChange={(evento) => { setTexto(evento.target.value); setErro(""); }} onKeyDown={(evento) => { if (evento.key === "Enter" && !evento.shiftKey) { evento.preventDefault(); evento.currentTarget.form?.requestSubmit(); } }} rows={1} maxLength={500} placeholder="Digite sua mensagem" className="max-h-28 min-h-10 flex-1 resize-none py-2.5 text-sm outline-none" />
+                    <textarea value={texto} onChange={(evento) => { setTexto(evento.target.value); setErro(""); }} onKeyDown={(evento) => { if (evento.key === "Enter" && !evento.shiftKey) { evento.preventDefault(); evento.currentTarget.form?.requestSubmit(); } }} rows={1} maxLength={500} placeholder={arquivo ? "Adicione uma legenda (opcional)" : "Digite sua mensagem"} className="max-h-28 min-h-10 flex-1 resize-none py-2.5 text-sm outline-none" />
                     <span className="relative self-stretch">
                       <button type="button" onClick={() => setMostrarEmojis((atual) => !atual)} aria-label="Escolher emoji" aria-expanded={mostrarEmojis} className="grid h-full w-11 place-items-center rounded-r-lg text-slate-400 hover:bg-primary-50 hover:text-primary-700"><IconeEmoji className="h-6 w-6" /></button>
                       {mostrarEmojis ? <span role="dialog" aria-label="Escolha um emoji" className="absolute bottom-12 right-0 z-10 flex gap-1 rounded-xl border border-border bg-white p-2 shadow-lg">{["😀", "😊", "👍", "❤️", "🎉"].map((emoji) => <button key={emoji} type="button" onClick={() => inserirEmoji(emoji)} className="grid h-9 w-9 place-items-center rounded-lg text-xl hover:bg-primary-50" aria-label={`Inserir ${emoji}`}>{emoji}</button>)}</span> : null}
                     </span>
                   </label>
-                  <button type="submit" disabled={enviando || !texto.trim()} aria-label="Enviar mensagem" className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary-700 text-xl text-white hover:bg-primary-900 disabled:cursor-not-allowed disabled:opacity-50">➤</button>
+                  <button type="submit" disabled={enviando || enviandoAnexo || (!texto.trim() && !arquivo)} aria-label={arquivo ? "Enviar arquivo" : "Enviar mensagem"} className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary-700 text-xl text-white hover:bg-primary-900 disabled:cursor-not-allowed disabled:opacity-50">{enviandoAnexo ? "…" : "➤"}</button>
                 </form>
                 <p className="mt-1 text-right text-[10px] text-muted">{texto.length}/500</p>
               </footer>

@@ -1,4 +1,11 @@
-export type TipoMensagem = "texto" | "solicitacao" | "sistema";
+export type TipoMensagem = "texto" | "solicitacao" | "sistema" | "arquivo";
+
+export type AnexoMensagem = {
+  nome: string;
+  caminho: string;
+  tipoMime: string;
+  tamanho: number;
+};
 
 export type StatusSolicitacao =
   | "aguardando"
@@ -17,6 +24,7 @@ export type Mensagem = {
   tipo: TipoMensagem;
   criadaEm: string;
   lidaEm: string | null;
+  arquivo: AnexoMensagem | null;
 };
 
 export type ConversaResumo = {

@@ -1,3 +1,4 @@
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { SessaoUsuario } from "@/models/entities/usuario";
 import type {
   ConversaResumo,
@@ -6,9 +7,10 @@ import type {
   StatusSolicitacao,
   TipoMensagem,
 } from "@/models/entities/mensagem";
-import { executarRpcSupabase } from "@/lib/supabase/rest";
+import { credenciaisSupabase, executarRpcSupabase } from "@/lib/supabase/rest";
 
 export const USUARIO_DEMONSTRACAO_ID = "demo-joao";
+const BUCKET_ANEXOS = "anexos-chat";
 
 type RegistroConversa = {
   id: string;
@@ -33,7 +35,20 @@ type RegistroMensagem = {
   tipo: string;
   criada_em: string;
   lida_em: string | null;
+  arquivo_nome?: string | null;
+  arquivo_caminho?: string | null;
+  arquivo_tipo?: string | null;
+  arquivo_tamanho?: number | string | null;
 };
+
+function clienteAutenticado(sessao: SessaoUsuario): SupabaseClient {
+  const credenciais = credenciaisSupabase();
+  if (!credenciais) throw new Error("Supabase não está configurado neste ambiente.");
+  return createClient(credenciais.url, credenciais.chave, {
+    global: { headers: { Authorization: `Bearer ${sessao.token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
 
 const STATUS_VALIDOS: StatusSolicitacao[] = [
   "aguardando",
@@ -52,7 +67,19 @@ function statusValido(status: string): StatusSolicitacao {
 }
 
 export function normalizarMensagem(registro: RegistroMensagem): Mensagem {
-  const tipos: TipoMensagem[] = ["texto", "solicitacao", "sistema"];
+  const tipos: TipoMensagem[] = ["texto", "solicitacao", "sistema", "arquivo"];
+  const tamanho = Number(registro.arquivo_tamanho);
+  const arquivo = registro.arquivo_nome
+    && registro.arquivo_caminho
+    && registro.arquivo_tipo
+    && Number.isFinite(tamanho)
+    ? {
+        nome: registro.arquivo_nome,
+        caminho: registro.arquivo_caminho,
+        tipoMime: registro.arquivo_tipo,
+        tamanho,
+      }
+    : null;
   return {
     id: registro.id,
     conversaId: registro.conversa_id,
@@ -63,6 +90,7 @@ export function normalizarMensagem(registro: RegistroMensagem): Mensagem {
       : "texto",
     criadaEm: registro.criada_em,
     lidaEm: registro.lida_em,
+    arquivo,
   };
 }
 
@@ -152,6 +180,7 @@ const MENSAGENS_DEMONSTRACAO: Record<string, Mensagem[]> = {
       tipo: "solicitacao",
       criadaEm: "2026-09-10T12:00:00-03:00",
       lidaEm: null,
+      arquivo: null,
     },
   ],
   "demo-livros": [
@@ -163,6 +192,7 @@ const MENSAGENS_DEMONSTRACAO: Record<string, Mensagem[]> = {
       tipo: "solicitacao",
       criadaEm: "2026-09-09T10:28:00-03:00",
       lidaEm: null,
+      arquivo: null,
     },
     {
       id: "demo-msg-2",
@@ -172,6 +202,7 @@ const MENSAGENS_DEMONSTRACAO: Record<string, Mensagem[]> = {
       tipo: "texto",
       criadaEm: "2026-09-09T10:29:00-03:00",
       lidaEm: "2026-09-09T10:29:30-03:00",
+      arquivo: null,
     },
     {
       id: "demo-msg-3",
@@ -181,6 +212,7 @@ const MENSAGENS_DEMONSTRACAO: Record<string, Mensagem[]> = {
       tipo: "texto",
       criadaEm: "2026-09-09T10:30:00-03:00",
       lidaEm: "2026-09-09T10:30:30-03:00",
+      arquivo: null,
     },
     {
       id: "demo-msg-4",
@@ -190,6 +222,7 @@ const MENSAGENS_DEMONSTRACAO: Record<string, Mensagem[]> = {
       tipo: "texto",
       criadaEm: "2026-09-09T10:32:00-03:00",
       lidaEm: null,
+      arquivo: null,
     },
   ],
   "demo-carrinhos": [
@@ -201,6 +234,7 @@ const MENSAGENS_DEMONSTRACAO: Record<string, Mensagem[]> = {
       tipo: "solicitacao",
       criadaEm: "2026-09-08T15:55:00-03:00",
       lidaEm: null,
+      arquivo: null,
     },
     {
       id: "demo-msg-6",
@@ -210,6 +244,7 @@ const MENSAGENS_DEMONSTRACAO: Record<string, Mensagem[]> = {
       tipo: "texto",
       criadaEm: "2026-09-08T16:05:00-03:00",
       lidaEm: "2026-09-08T16:06:00-03:00",
+      arquivo: null,
     },
     {
       id: "demo-msg-7",
@@ -219,6 +254,7 @@ const MENSAGENS_DEMONSTRACAO: Record<string, Mensagem[]> = {
       tipo: "texto",
       criadaEm: "2026-09-08T16:10:00-03:00",
       lidaEm: null,
+      arquivo: null,
     },
   ],
   "demo-violao": [
@@ -230,6 +266,7 @@ const MENSAGENS_DEMONSTRACAO: Record<string, Mensagem[]> = {
       tipo: "solicitacao",
       criadaEm: "2026-09-05T09:40:00-03:00",
       lidaEm: null,
+      arquivo: null,
     },
   ],
 };
@@ -302,6 +339,82 @@ export async function salvarMensagem(
     { p_conversa_id: conversaId, p_conteudo: conteudo },
   );
   return normalizarMensagem(registros[0]);
+}
+
+function extensaoDoArquivo(nome: string): string {
+  const extensao = nome.split(".").pop()?.toLocaleLowerCase("pt-BR") ?? "";
+  return /^[a-z0-9]{1,10}$/.test(extensao) ? `.${extensao}` : "";
+}
+
+export async function salvarAnexoMensagem(
+  sessao: SessaoUsuario,
+  conversaId: string,
+  conteudo: string,
+  arquivo: File,
+  nome: string,
+): Promise<Mensagem> {
+  const supabase = clienteAutenticado(sessao);
+  const caminho = `${conversaId}/${sessao.usuarioId}/${crypto.randomUUID()}${extensaoDoArquivo(nome)}`;
+
+  const { error: erroUpload } = await supabase.storage
+    .from(BUCKET_ANEXOS)
+    .upload(caminho, arquivo, {
+      contentType: arquivo.type,
+      upsert: false,
+    });
+  if (erroUpload) throw erroUpload;
+
+  try {
+    const { data, error } = await supabase.rpc("enviar_anexo", {
+      p_conversa_id: conversaId,
+      p_conteudo: conteudo,
+      p_arquivo_nome: nome,
+      p_arquivo_caminho: caminho,
+      p_arquivo_tipo: arquivo.type,
+      p_arquivo_tamanho: arquivo.size,
+    });
+    if (error) throw error;
+
+    const registros = data as RegistroMensagem[] | null;
+    if (!registros?.[0]) throw new Error("O anexo não foi registrado no chat.");
+    return normalizarMensagem(registros[0]);
+  } catch (erro) {
+    const { error: erroLimpeza } = await supabase.storage
+      .from(BUCKET_ANEXOS)
+      .remove([caminho]);
+    if (erroLimpeza) {
+      throw new AggregateError(
+        [erro, erroLimpeza],
+        "O envio falhou e não foi possível remover o arquivo do armazenamento.",
+      );
+    }
+    throw erro;
+  }
+}
+
+export async function criarDownloadAnexo(
+  sessao: SessaoUsuario,
+  mensagemId: string,
+): Promise<{ url: string; nome: string }> {
+  const supabase = clienteAutenticado(sessao);
+  const { data: mensagem, error } = await supabase
+    .from("mensagens")
+    .select("arquivo_caminho, arquivo_nome")
+    .eq("id", mensagemId)
+    .maybeSingle();
+
+  if (error || !mensagem?.arquivo_caminho || !mensagem.arquivo_nome) {
+    throw new Error("Anexo não encontrado.");
+  }
+
+  const { data, error: erroAssinatura } = await supabase.storage
+    .from(BUCKET_ANEXOS)
+    .createSignedUrl(mensagem.arquivo_caminho, 60, {
+      download: mensagem.arquivo_nome,
+    });
+  if (erroAssinatura || !data?.signedUrl) throw new Error("Anexo não encontrado.");
+
+  return { url: data.signedUrl, nome: mensagem.arquivo_nome };
 }
 
 export async function salvarRespostaSolicitacao(
