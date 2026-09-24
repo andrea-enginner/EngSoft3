@@ -7,8 +7,17 @@ function compararCategoria(valor: string) {
   return valor.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
-export async function carregarItensDoFeed(categoria?: string, termo?: string) {
-  const emprestimos = (await listarItensAtivos(termo)).filter(
+export async function carregarItensDoFeed(
+  categoria?: string,
+  termo?: string,
+  token: string | null = null,
+) {
+  const [itensAtivos, idsDaListaDesejos] = await Promise.all([
+    listarItensAtivos(termo),
+    obterIdsDesejados(token),
+  ]);
+  const idsDesejados = new Set(idsDaListaDesejos);
+  const emprestimos = itensAtivos.filter(
     (item) => item.tipo === "emprestimo",
   ).map((item) => ({
     ...item,
