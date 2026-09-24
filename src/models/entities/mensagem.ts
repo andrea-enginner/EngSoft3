@@ -1,6 +1,13 @@
 import type { Reputacao } from "@/models/entities/avaliacao";
 
-export type TipoMensagem = "texto" | "solicitacao" | "sistema";
+export type TipoMensagem = "texto" | "solicitacao" | "sistema" | "arquivo";
+
+export type AnexoMensagem = {
+  nome: string;
+  caminho: string;
+  tipoMime: string;
+  tamanho: number;
+};
 
 export type StatusSolicitacao =
   | "aguardando"
