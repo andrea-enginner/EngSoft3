@@ -3,6 +3,7 @@ import { carregarFeed } from "@/controllers/feed.controller";
 import { BarraFiltros } from "@/views/feed/BarraFiltros";
 import { CampoBusca } from "@/views/feed/CampoBusca";
 import { CardItem } from "@/views/feed/CardItem";
+import { AcessoRestrito } from "@/views/auth/AcessoRestrito";
 
 export const dynamic = "force-dynamic";
 

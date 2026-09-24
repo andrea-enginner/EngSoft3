@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ConversaResumo } from "@/models/entities/mensagem";
+import { ReputacaoInterlocutor } from "@/views/mensagens/ReputacaoInterlocutor";
 
 type Props = {
   conversas: ConversaResumo[];
@@ -56,6 +57,10 @@ export function ListaConversas({ conversas, conversaAtivaId }: Props) {
             </span>
             <span className="min-w-0">
               <strong className="block truncate text-sm text-slate-800">{conversa.interlocutorNome}</strong>
+              <ReputacaoInterlocutor
+                reputacao={conversa.reputacaoInterlocutor}
+                className="mt-0.5 text-[11px]"
+              />
               <span className="block truncate text-[11px] text-muted">Sobre: {conversa.tituloItem}</span>
               <span className="mt-1 block truncate text-xs text-slate-500">{conversa.ultimaMensagem}</span>
             </span>

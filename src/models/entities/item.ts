@@ -16,6 +16,7 @@ export type AnuncioResumo = {
   duracaoUnidade: UnidadeDuracao | null;
   publicadoEm: string;
   ativo: boolean;
+  naListaDesejos: boolean;
   avaliacao?: number;
   impulsionado?: boolean;
   impulsionadoAte?: string | null;

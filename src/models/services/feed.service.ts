@@ -1,4 +1,7 @@
 import { listarItensAtivos } from "@/models/repositories/item.repository";
+import { obterIdsDesejados } from "@/models/services/lista-desejos.service";
+
+export const FILTRO_LISTA_DESEJOS = "lista-de-desejos";
 
 function compararCategoria(valor: string) {
   return valor.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -7,7 +10,10 @@ function compararCategoria(valor: string) {
 export async function carregarItensDoFeed(categoria?: string, termo?: string) {
   const emprestimos = (await listarItensAtivos(termo)).filter(
     (item) => item.tipo === "emprestimo",
-  );
+  ).map((item) => ({
+    ...item,
+    naListaDesejos: idsDesejados.has(item.id),
+  }));
   const categorias = Array.from(
     new Set(
       emprestimos
@@ -18,11 +24,17 @@ export async function carregarItensDoFeed(categoria?: string, termo?: string) {
   const categoriaValida = categorias.find(
     (opcao) => compararCategoria(opcao) === compararCategoria(categoria ?? ""),
   );
+  const listaDesejosSelecionada = categoria === FILTRO_LISTA_DESEJOS;
 
   return {
     categorias,
-    categoriaSelecionada: categoriaValida,
-    itens: categoriaValida
+    filtroSelecionado: listaDesejosSelecionada
+      ? FILTRO_LISTA_DESEJOS
+      : categoriaValida,
+    listaDesejosSelecionada,
+    itens: listaDesejosSelecionada
+      ? emprestimos.filter((item) => item.naListaDesejos)
+      : categoriaValida
       ? emprestimos.filter(
           (item) =>
             item.categoria &&

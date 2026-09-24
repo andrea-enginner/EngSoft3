@@ -18,6 +18,7 @@ const DEMONSTRACAO: AnuncioDetalhe[] = [
   duracaoQuantidade: tipo === "emprestimo" ? 1 : null,
   duracaoUnidade: tipo === "emprestimo" ? "semanas" : null,
   publicadoEm: new Date(Date.now() - (indice + 2) * 86_400_000).toISOString(), ativo: true,
+  naListaDesejos: false,
   aceitaPropostas: true,
   dono: { id: `demo-${id}`, nome, avaliacao: 4.8, quantidadeEmprestimos: 0, confiavel: true },
 }));
@@ -51,6 +52,7 @@ function normalizar(registro: RegistroPublico): AnuncioDetalhe {
     duracaoUnidade: ["minutos", "horas", "dias", "semanas"].includes(registro.duracao_unidade ?? "")
       ? registro.duracao_unidade as AnuncioDetalhe["duracaoUnidade"] : null,
     publicadoEm: registro.criado_em, ativo: true, avaliacao,
+    naListaDesejos: false,
     impulsionado: registro.impulsionado ?? false,
     impulsionadoAte: registro.impulsionado_ate ?? null,
     aceitaPropostas: false,
