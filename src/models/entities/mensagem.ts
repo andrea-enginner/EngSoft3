@@ -1,11 +1,6 @@
-export type TipoMensagem = "texto" | "solicitacao" | "sistema" | "arquivo";
+import type { Reputacao } from "@/models/entities/avaliacao";
 
-export type AnexoMensagem = {
-  nome: string;
-  caminho: string;
-  tipoMime: string;
-  tamanho: number;
-};
+export type TipoMensagem = "texto" | "solicitacao" | "sistema";
 
 export type StatusSolicitacao =
   | "aguardando"
@@ -40,6 +35,7 @@ export type ConversaResumo = {
   naoLidas: number;
   status: StatusSolicitacao;
   usuarioEProprietario: boolean;
+  reputacaoInterlocutor: Reputacao;
 };
 
 export type PainelMensagens = {

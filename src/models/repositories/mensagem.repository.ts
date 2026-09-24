@@ -25,6 +25,8 @@ type RegistroConversa = {
   nao_lidas: number | string;
   status: string;
   usuario_e_proprietario: boolean;
+  interlocutor_nota: number | string | null;
+  interlocutor_total_avaliacoes: number | string;
 };
 
 type RegistroMensagem = {
@@ -95,6 +97,11 @@ export function normalizarMensagem(registro: RegistroMensagem): Mensagem {
 }
 
 function normalizarConversa(registro: RegistroConversa): ConversaResumo {
+  const nota = registro.interlocutor_nota === null
+    ? null
+    : Number(registro.interlocutor_nota);
+  const totalAvaliacoes = Number(registro.interlocutor_total_avaliacoes);
+
   return {
     id: registro.id,
     anuncioId: registro.anuncio_id,
@@ -108,6 +115,10 @@ function normalizarConversa(registro: RegistroConversa): ConversaResumo {
     naoLidas: Number(registro.nao_lidas),
     status: statusValido(registro.status),
     usuarioEProprietario: registro.usuario_e_proprietario,
+    reputacaoInterlocutor: {
+      nota: nota !== null && Number.isFinite(nota) ? nota : null,
+      total: Number.isFinite(totalAvaliacoes) ? Math.max(0, totalAvaliacoes) : 0,
+    },
   };
 }
 
@@ -125,6 +136,7 @@ const CONVERSAS_DEMONSTRACAO: ConversaResumo[] = [
     naoLidas: 0,
     status: "aguardando",
     usuarioEProprietario: false,
+    reputacaoInterlocutor: { nota: 4.8, total: 18 },
   },
   {
     id: "demo-livros",
@@ -139,6 +151,7 @@ const CONVERSAS_DEMONSTRACAO: ConversaResumo[] = [
     naoLidas: 2,
     status: "aguardando",
     usuarioEProprietario: true,
+    reputacaoInterlocutor: { nota: 4.9, total: 27 },
   },
   {
     id: "demo-carrinhos",
@@ -153,6 +166,7 @@ const CONVERSAS_DEMONSTRACAO: ConversaResumo[] = [
     naoLidas: 1,
     status: "aceito",
     usuarioEProprietario: true,
+    reputacaoInterlocutor: { nota: 4.6, total: 9 },
   },
   {
     id: "demo-violao",
@@ -167,6 +181,7 @@ const CONVERSAS_DEMONSTRACAO: ConversaResumo[] = [
     naoLidas: 0,
     status: "recusado",
     usuarioEProprietario: false,
+    reputacaoInterlocutor: { nota: null, total: 0 },
   },
 ];
 
