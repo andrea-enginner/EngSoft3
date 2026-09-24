@@ -3,10 +3,14 @@ import { IconeFiltro, IconeSeta } from "@/views/comuns/Icones";
 
 type Props = {
   categorias: string[];
-  categoriaSelecionada?: string;
+  filtroSelecionado?: string;
 };
 
-export function BarraFiltros({ categorias, categoriaSelecionada }: Props) {
+export function BarraFiltros({ categorias, filtroSelecionado }: Props) {
+  const opcoes = [...categorias];
+  const indiceOutros = opcoes.indexOf("Outros");
+  opcoes.splice(indiceOutros < 0 ? opcoes.length : indiceOutros, 0, "Lista de desejos");
+
   return (
     <form action="/feed" method="get" className="flex flex-wrap items-end justify-end gap-3">
       <label className="min-w-[220px] text-sm font-medium text-foreground">
@@ -14,13 +18,16 @@ export function BarraFiltros({ categorias, categoriaSelecionada }: Props) {
         <span className="relative block">
           <select
             name="categoria"
-            defaultValue={categoriaSelecionada ?? ""}
+            defaultValue={filtroSelecionado ?? ""}
             className="h-11 w-full appearance-none rounded-[10px] border border-border bg-white px-4 pr-10 text-sm text-foreground outline-none hover:border-primary-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
           >
             <option value="">Todas as categorias</option>
-            {categorias.map((categoria) => (
-              <option key={categoria} value={categoria}>
-                {categoria}
+            {opcoes.map((opcao) => (
+              <option
+                key={opcao}
+                value={opcao === "Lista de desejos" ? "lista-de-desejos" : opcao}
+              >
+                {opcao}
               </option>
             ))}
           </select>
@@ -33,7 +40,7 @@ export function BarraFiltros({ categorias, categoriaSelecionada }: Props) {
         Filtrar
       </button>
 
-      {categoriaSelecionada ? (
+      {filtroSelecionado ? (
         <Link href="/feed" className="flex h-11 items-center rounded-[10px] px-3 text-sm font-semibold text-primary-700 hover:bg-primary-50">
           Limpar
         </Link>
