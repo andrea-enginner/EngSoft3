@@ -19,6 +19,7 @@ export type Mensagem = {
   tipo: TipoMensagem;
   criadaEm: string;
   lidaEm: string | null;
+  arquivo: AnexoMensagem | null;
 };
 
 export type ConversaResumo = {

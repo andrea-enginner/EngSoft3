@@ -6,7 +6,8 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/controllers/auth.actions";
 import { createClient } from "@/lib/supabase/client";
-import { IconeMensagem, IconeSino, IconeTicket } from "@/views/comuns/Icones";
+import { IconeMensagem, IconeTicket } from "@/views/comuns/Icones";
+import { NotificacoesMensagens } from "@/views/layout/NotificacoesMensagens";
 
 const NAVEGACAO_AUTENTICADA = [
   { rotulo: "Início", href: "/feed" },
@@ -144,10 +145,7 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
                   <span className="hidden xl:inline">cupons</span>
                 </Link>
               ) : null}
-              <span role="img" aria-label="Notificações" title="Notificações" className="relative hidden h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-muted shadow-sm sm:flex">
-                <IconeSino className="h-[21px] w-[21px]" />
-                <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full bg-accent ring-2 ring-surface" />
-              </span>
+              <NotificacoesMensagens onAbrir={() => setMenuAberto(false)} />
               <Link href="/mensagens" aria-label="Mensagens" aria-current={mensagensAtivas ? "page" : undefined} className={`relative hidden h-10 w-10 items-center justify-center rounded-full border shadow-sm outline-none hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 sm:flex ${mensagensAtivas ? "border-primary-300 bg-primary-100 text-primary-700" : "border-border bg-surface text-muted hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"}`}>
                 <IconeMensagem className="h-[21px] w-[21px]" />
               </Link>

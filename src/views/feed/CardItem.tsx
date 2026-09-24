@@ -1,8 +1,8 @@
 /**
  * Camada VIEW — cartão de um item do feed.
  *
- * O cartão direciona para o detalhe pelo ID do item. O coração permanece
- * apenas visual até existir um Controller para favoritos.
+ * O cartão direciona para o detalhe pelo ID do item e permite incluir o
+ * anúncio na lista de desejos.
  *
  * O tipo `ItemFeed` abaixo é provisório: quando você criar a camada Model,
  * mova-o para `src/models/entities/item.ts` e importe daqui. Esta View não
@@ -15,12 +15,12 @@ import type { AnuncioResumo } from "@/models/entities/item";
 import { formatarTarifa } from "@/lib/formatar-emprestimo";
 import {
   IconeCondicao,
-  IconeCoracao,
   IconeDoacao,
   IconeEmprestimo,
   IconeEstrela,
   IconeLocal,
 } from "@/views/comuns/Icones";
+import { BotaoListaDesejos } from "@/views/itens/BotaoListaDesejos";
 
 export type ItemFeed = AnuncioResumo;
 
@@ -37,12 +37,20 @@ const ESTILO_TIPO = {
   },
 } as const;
 
-export function CardItem({ item }: { item: ItemFeed }) {
+export function CardItem({
+  item,
+  autenticado,
+  destino,
+}: {
+  item: ItemFeed;
+  autenticado: boolean;
+  destino: string;
+}) {
   const tipo = ESTILO_TIPO[item.tipo];
 
   return (
-    <Link href={`/itens/${item.id}`} className="block rounded-[18px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
-    <article className="flex min-h-[410px] flex-col overflow-hidden rounded-[18px] border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <article className="relative rounded-[18px]">
+    <Link href={`/itens/${item.id}`} className="flex min-h-[410px] flex-col overflow-hidden rounded-[18px] border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
       {/* Área da imagem */}
       <div className="relative h-36 overflow-hidden bg-soft">
         <Image
@@ -65,12 +73,6 @@ export function CardItem({ item }: { item: ItemFeed }) {
           </span>
         ) : null}
 
-        <span className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-muted shadow-sm">
-          <IconeCoracao
-            className="h-4 w-4"
-            preenchido={false}
-          />
-        </span>
       </div>
 
       <div className="flex flex-1 flex-col p-4">
@@ -105,7 +107,13 @@ export function CardItem({ item }: { item: ItemFeed }) {
           ) : null}
         </div>
       </div>
-    </article>
     </Link>
+    <BotaoListaDesejos
+      anuncioId={item.id}
+      autenticado={autenticado}
+      naListaDesejos={item.naListaDesejos}
+      destino={destino}
+    />
+    </article>
   );
 }

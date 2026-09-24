@@ -151,6 +151,7 @@ export async function buscarAnuncioParaImpulsionar(
         : null,
       publicadoEm: registro.criado_em,
       ativo: registro.ativo,
+      naListaDesejos: false,
     },
     assinatura,
     impulsionadoAte,

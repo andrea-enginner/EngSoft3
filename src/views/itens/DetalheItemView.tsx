@@ -6,6 +6,7 @@ import { AcessoRestrito } from "@/views/auth/AcessoRestrito";
 import { CartaoDono } from "@/views/itens/CartaoDono";
 import { GaleriaItem } from "@/views/itens/GaleriaItem";
 import { ModalInteresse } from "@/views/itens/ModalInteresse";
+import { BotaoListaDesejos } from "@/views/itens/BotaoListaDesejos";
 
 const APRESENTACAO_TIPO = {
   doacao: { rotulo: "Doação", classe: "bg-doacao", Icone: IconeDoacao },
@@ -27,6 +28,13 @@ export function DetalheItemView({ item, autenticado }: { item: ItemDetalhe; aute
             <tipo.Icone className="h-3.5 w-3.5" />
             {tipo.rotulo}
           </span>
+          <BotaoListaDesejos
+            anuncioId={item.id}
+            autenticado={autenticado}
+            naListaDesejos={item.naListaDesejos}
+            destino={`/itens/${item.id}`}
+            variante="detalhe"
+          />
         </div>
 
         <div className="space-y-6">
