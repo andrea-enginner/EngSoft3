@@ -19,12 +19,8 @@ export async function obterItemDetalhe(id: string, token: string | null = null) 
       anuncio.id !== idNormalizado
       && anuncio.tipo === "emprestimo"
       && anuncio.impulsionado === true
+      && anuncio.categoria === item.categoria
     )
-    .sort((a, b) => {
-      const categoriaA = a.categoria === item.categoria ? 1 : 0;
-      const categoriaB = b.categoria === item.categoria ? 1 : 0;
-      return categoriaB - categoriaA;
-    })
     .slice(0, 4)
     .map((anuncio) => ({
       ...anuncio,
