@@ -22,7 +22,9 @@ export async function carregarItensDoFeed(
   ).map((item) => ({
     ...item,
     naListaDesejos: idsDesejados.has(item.id),
-  }));
+  })).sort(
+    (a, b) => Date.parse(b.publicadoEm) - Date.parse(a.publicadoEm),
+  );
   const categorias = Array.from(
     new Set(
       emprestimos

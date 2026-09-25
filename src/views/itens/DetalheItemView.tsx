@@ -1,3 +1,6 @@
+import Image from "next/image";
+import Link from "next/link";
+import type { AnuncioResumo } from "@/models/entities/item";
 import type { ItemDetalhe } from "@/models/entities/item-detalhe";
 import { formatarPublicacao } from "@/lib/formatar-publicacao";
 import { calcularTotal, formatarDuracao, formatarTarifa, formatarValor } from "@/lib/formatar-emprestimo";
@@ -13,7 +16,58 @@ const APRESENTACAO_TIPO = {
   emprestimo: { rotulo: "Empréstimo", classe: "bg-emprestimo", Icone: IconeEmprestimo },
 } as const;
 
-export function DetalheItemView({ item, autenticado }: { item: ItemDetalhe; autenticado: boolean }) {
+function ItensRelacionados({ itens }: { itens: AnuncioResumo[] }) {
+  if (!itens.length) return null;
+
+  return (
+    <section className="rounded-2xl border border-primary-200 bg-gradient-to-br from-primary-50 to-white p-5 shadow-sm" aria-labelledby="titulo-itens-relacionados">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary-500">Anúncios em destaque</p>
+          <h2 id="titulo-itens-relacionados" className="mt-1 text-lg font-extrabold text-primary-900">Você também pode precisar</h2>
+        </div>
+        <span aria-hidden="true" className="text-xl text-primary-500">✦</span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        {itens.map((relacionado) => (
+          <Link
+            key={relacionado.id}
+            href={`/itens/${relacionado.id}`}
+            className="group overflow-hidden rounded-xl border border-border bg-white shadow-sm outline-none hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary-500"
+          >
+            <div className="relative h-24 overflow-hidden bg-soft">
+              <Image
+                src={relacionado.imagem ?? "/file.svg"}
+                alt={relacionado.titulo}
+                fill
+                unoptimized={relacionado.imagem?.startsWith("http")}
+                className="object-cover transition-transform group-hover:scale-105"
+              />
+              <span className="absolute left-2 top-2 rounded-full bg-primary-900 px-2 py-1 text-[9px] font-extrabold uppercase tracking-wide text-white shadow">✦ Destaque</span>
+            </div>
+            <div className="p-3">
+              <h3 className="line-clamp-2 text-xs font-bold leading-5 text-primary-900">{relacionado.titulo}</h3>
+              {relacionado.valorUnitarioCentavos && relacionado.duracaoUnidade ? (
+                <p className="mt-1 text-[11px] font-semibold text-primary-700">{formatarTarifa(relacionado.valorUnitarioCentavos, relacionado.duracaoUnidade)}</p>
+              ) : null}
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function DetalheItemView({
+  item,
+  relacionados,
+  autenticado,
+}: {
+  item: ItemDetalhe;
+  relacionados: AnuncioResumo[];
+  autenticado: boolean;
+}) {
   const tipo = APRESENTACAO_TIPO[item.tipo];
   const termos = item.tipo === "emprestimo" && item.valorUnitarioCentavos && item.duracaoQuantidade && item.duracaoUnidade
     ? { valor: item.valorUnitarioCentavos, quantidade: item.duracaoQuantidade, unidade: item.duracaoUnidade }
@@ -58,6 +112,7 @@ export function DetalheItemView({ item, autenticado }: { item: ItemDetalhe; aute
             </p> : null}
           </section>
 
+          <ItensRelacionados itens={relacionados} />
           <CartaoDono dono={item.dono} />
           {termos ? <section aria-label="Solicitar reserva">
             {autenticado ? <ModalInteresse
@@ -72,6 +127,7 @@ export function DetalheItemView({ item, autenticado }: { item: ItemDetalhe; aute
           </section> : item.tipo === "emprestimo" ? <p className="rounded-xl border border-border bg-soft p-4 text-center text-sm text-muted">As condições desta reserva ainda não foram informadas.</p> : null}
         </div>
       </div>
+
     </main>
   );
 }

@@ -4,9 +4,15 @@ import { DetalheItemView } from "@/views/itens/DetalheItemView";
 
 export default async function PaginaDetalheItem({ params }: PageProps<"/itens/[id]">) {
   const { id } = await params;
-  const { item, autenticado } = await carregarItemDetalhe(id);
+  const { item, relacionados, autenticado } = await carregarItemDetalhe(id);
 
   if (!item) notFound();
 
-  return <DetalheItemView item={item} autenticado={autenticado} />;
+  return (
+    <DetalheItemView
+      item={item}
+      relacionados={relacionados}
+      autenticado={autenticado}
+    />
+  );
 }
