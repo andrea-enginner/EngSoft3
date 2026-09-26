@@ -11,6 +11,7 @@ export type AnuncioResumo = {
   condicao: string;
   localizacao: string;
   imagem: string | null;
+  imagens?: string[];
   valorUnitarioCentavos: number | null;
   duracaoQuantidade: number | null;
   duracaoUnidade: UnidadeDuracao | null;
