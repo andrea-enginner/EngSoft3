@@ -198,7 +198,7 @@ export function NotificacoesMensagens({
         aria-controls="painel-notificacoes-mensagens"
         title="Notificações"
         onClick={alternarPainel}
-        className={`relative flex h-10 w-10 items-center justify-center rounded-full border shadow-sm outline-none hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${aberto ? "border-primary-300 bg-primary-100 text-primary-700" : "border-border bg-surface text-muted hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"}`}
+        className={`relative flex h-10 w-10 items-center justify-center rounded-full border shadow-sm outline-none transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${aberto ? "border-primary-300 bg-primary-100 text-primary-700" : "border-border bg-white/80 text-muted hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"}`}
       >
         <IconeSino className="h-[21px] w-[21px]" />
         {totalNaoLidas > 0 ? (
