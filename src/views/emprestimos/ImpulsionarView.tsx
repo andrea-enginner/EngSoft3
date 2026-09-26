@@ -3,15 +3,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ResultadoPaginaImpulsionamento } from "@/controllers/impulsionamento.controller";
 import {
   DIAS_POR_CUPOM,
   PACOTES_CUPONS,
   PLANOS_MEMBRO,
+  type AssinaturaMembro,
   type PlanoMembroId,
 } from "@/models/entities/impulsionamento";
 import { formatarTarifa, formatarValor } from "@/lib/formatar-emprestimo";
+import { createClient } from "@/lib/supabase/client";
 import { IconeCartao, IconeEscudo, IconeImagem, IconeTicket } from "@/views/comuns/Icones";
 
 const DATA = new Intl.DateTimeFormat("pt-BR", { dateStyle: "long" });
@@ -56,7 +58,50 @@ export function ImpulsionarView({ resultado, retorno }: {
   const [carregando, setCarregando] = useState<"checkout" | "cupom" | "compra" | "portal" | null>(null);
   const [erroAcao, setErroAcao] = useState("");
   const detalhes = resultado.detalhes;
+  const [saldoAtual, setSaldoAtual] = useState<Pick<AssinaturaMembro, "cuponsDisponiveis" | "cuponsMensais" | "cuponsExtras"> | null>(null);
   const planoSelecionado = PLANOS_MEMBRO.find((item) => item.id === plano)!;
+
+  useEffect(() => {
+    if (!detalhes?.assinatura) return;
+
+    const supabase = createClient();
+    const saldoInicial = detalhes.assinatura.cuponsDisponiveis;
+    const maximoTentativas = retorno === "cupons" ? 10 : 1;
+    let ativo = true;
+    let tentativa = 0;
+    let temporizador: ReturnType<typeof setTimeout> | undefined;
+
+    async function atualizarSaldo() {
+      tentativa += 1;
+      const { data, error } = await supabase.rpc("obter_saldo_cupons");
+      if (!ativo) return;
+
+      const registro = Array.isArray(data) ? data[0] : null;
+      if (!error && registro) {
+        const cuponsDisponiveis = Math.max(0, Number(registro.cupons_disponiveis ?? 0));
+        const cuponsMensais = Math.max(0, Number(registro.cupons_mensais ?? 0));
+        const cuponsExtras = Math.max(0, Number(registro.cupons_extras ?? 0));
+        setSaldoAtual({
+          cuponsDisponiveis,
+          cuponsMensais,
+          cuponsExtras,
+        });
+        window.dispatchEvent(new CustomEvent("ciclo:saldo-cupons", { detail: cuponsDisponiveis }));
+
+        if (cuponsDisponiveis > saldoInicial) return;
+      }
+
+      if (tentativa < maximoTentativas) {
+        temporizador = setTimeout(() => void atualizarSaldo(), 2_000);
+      }
+    }
+
+    void atualizarSaldo();
+    return () => {
+      ativo = false;
+      if (temporizador) clearTimeout(temporizador);
+    };
+  }, [detalhes, retorno]);
 
   async function chamarEndpoint(caminho: string, corpo?: Record<string, string | number>) {
     const resposta = await fetch(caminho, {
@@ -64,7 +109,13 @@ export function ImpulsionarView({ resultado, retorno }: {
       headers: { "Content-Type": "application/json" },
       body: corpo ? JSON.stringify(corpo) : undefined,
     });
-    const dados = await resposta.json() as { url?: string; erro?: string; cuponsDisponiveis?: number };
+    const dados = await resposta.json() as {
+      url?: string;
+      erro?: string;
+      cuponsDisponiveis?: number;
+      cuponsMensais?: number;
+      cuponsExtras?: number;
+    };
     if (!resposta.ok) throw new Error(dados.erro ?? "Não foi possível concluir a operação.");
     return dados;
   }
@@ -90,6 +141,13 @@ export function ImpulsionarView({ resultado, retorno }: {
     try {
       const dados = await chamarEndpoint("/api/impulsionamentos/usar-cupom", { anuncioId: detalhes.anuncio.id });
       if (typeof dados.cuponsDisponiveis === "number") {
+        if (typeof dados.cuponsMensais === "number" && typeof dados.cuponsExtras === "number") {
+          setSaldoAtual({
+            cuponsDisponiveis: dados.cuponsDisponiveis,
+            cuponsMensais: dados.cuponsMensais,
+            cuponsExtras: dados.cuponsExtras,
+          });
+        }
         window.dispatchEvent(new CustomEvent("ciclo:saldo-cupons", { detail: dados.cuponsDisponiveis }));
       }
       router.push(`/emprestimos/impulsionar?anuncio=${encodeURIComponent(detalhes.anuncio.id)}&resultado=impulsionado`);
@@ -143,7 +201,9 @@ export function ImpulsionarView({ resultado, retorno }: {
     );
   }
 
-  const assinatura = detalhes.assinatura;
+  const assinatura = detalhes.assinatura && saldoAtual
+    ? { ...detalhes.assinatura, ...saldoAtual }
+    : detalhes.assinatura;
   const assinaturaAtiva = assinatura?.status === "ativa";
   const podeUsarCupom = assinaturaAtiva && assinatura.cuponsDisponiveis > 0 && !detalhes.impulsionadoAte;
   const nomePlanoAtual = PLANOS_MEMBRO.find((item) => item.id === assinatura?.plano)?.nome;
