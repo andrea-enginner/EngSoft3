@@ -45,7 +45,7 @@ export function Rodape({ autenticado }: { autenticado: boolean }) {
               <span className="text-2xl font-bold tracking-[-0.03em]">Ciclo</span>
             </Link>
             <p className="mt-5 max-w-md text-sm leading-6 text-white/70 sm:text-base">Itens ganham novos usos, pessoas se aproximam e o consumo fica mais consciente. Tudo começa perto de casa.</p>
-            <div className="mt-6 flex flex-wrap gap-2 text-xs font-semibold"><span className="rounded-full border border-white/15 bg-white/[0.07] px-3 py-1.5 text-white/70">Doe o que não usa</span><span className="rounded-full border border-white/15 bg-white/[0.07] px-3 py-1.5 text-white/70">Empreste com confiança</span></div>
+            <div className="mt-6 flex flex-wrap gap-2 text-xs font-semibold"><span className="rounded-full border border-white/15 bg-white/[0.07] px-3 py-1.5 text-white/70">Empreste com confiança</span></div>
           </div>
           <nav aria-label="Navegação do rodapé">
             <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-primary-100/75">Explore</h2>
