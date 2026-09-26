@@ -113,20 +113,23 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
   const navegacao = usuarioLogado ? NAVEGACAO_AUTENTICADA : NAVEGACAO_PUBLICA;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-primary-100/80 bg-surface/90 shadow-[0_10px_30px_-26px_rgba(76,29,149,0.65)] backdrop-blur-xl">
-      <div className="mx-auto flex h-[72px] max-w-7xl items-center gap-5 px-5 sm:px-8">
-        <Link href="/feed" aria-label="Ciclo — início" className="group flex shrink-0 items-center gap-2.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
-          <Image src="/ciclo-logo.png" alt="" width={40} height={40} className="h-10 w-10 object-contain transition-transform group-hover:-rotate-3 group-hover:scale-105" priority />
-          <span className="hidden text-xl font-bold tracking-[-0.03em] text-primary-900 sm:block">Ciclo</span>
+    <header className="sticky top-0 z-50 overflow-visible border-b border-primary-100 bg-gradient-to-r from-white/95 via-primary-50/45 to-white/95 shadow-[0_8px_24px_-22px_rgba(76,29,149,0.55)] backdrop-blur-xl">
+      <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary-400/60 to-transparent" />
+      <div className="relative mx-auto flex h-[72px] max-w-7xl items-center gap-5 px-5 sm:px-8">
+        <Link href="/feed" aria-label="Ciclo — início" className="group/logo flex shrink-0 items-center gap-2.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
+          <span className="relative grid h-12 w-12 place-items-center rounded-2xl bg-primary-50 ring-1 ring-primary-100 transition duration-300 group-hover/logo:scale-105 group-hover/logo:bg-primary-100">
+            <Image src="/ciclo-logo.png" alt="" width={44} height={44} className="relative h-11 w-11 object-contain" priority />
+          </span>
+          <span className="hidden text-xl font-bold tracking-[-0.03em] text-primary-900 transition-colors group-hover/logo:text-primary-700 sm:block">Ciclo</span>
         </Link>
 
         <nav className="hidden flex-1 justify-center lg:flex" aria-label="Navegação principal">
-          <ul className="flex items-center gap-7 text-sm">
+          <ul className="flex items-center gap-2 text-sm">
             {navegacao.map(({ rotulo, href }) => {
               const ativo = rotaEstaAtiva(pathname, href);
               return (
                 <li key={href}>
-                  <Link href={href} aria-current={ativo ? "page" : undefined} className={`relative block rounded-md px-0.5 py-2 font-medium outline-none after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:origin-center after:rounded-full after:bg-primary-500 after:transition-transform focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-4 ${ativo ? "text-primary-700 after:scale-x-100" : "text-muted after:scale-x-0 hover:text-primary-700 hover:after:scale-x-100"}`}>
+                  <Link href={href} aria-current={ativo ? "page" : undefined} className={`relative block rounded-lg px-3 py-2 font-medium outline-none transition-colors after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:origin-center after:rounded-full after:bg-primary-500 after:transition-transform focus-visible:ring-2 focus-visible:ring-primary-500 ${ativo ? "bg-primary-50 text-primary-700 after:scale-x-100" : "text-muted after:scale-x-0 hover:bg-primary-50/70 hover:text-primary-700 hover:after:scale-x-75"}`}>
                     {rotulo}
                   </Link>
                 </li>
@@ -139,19 +142,19 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
           {usuarioLogado ? (
             <>
               {cupons !== null ? (
-                <Link href="/perfil" aria-label={`${cupons} cupons disponíveis`} title="Cupons de impulsionamento" className="inline-flex h-10 items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 text-xs font-bold text-primary-700 shadow-sm hover:-translate-y-0.5 hover:border-primary-300 hover:bg-primary-100 sm:px-3">
+                <Link href="/perfil" aria-label={`${cupons} cupons disponíveis`} title="Cupons de impulsionamento" className="inline-flex h-10 items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 text-xs font-bold text-primary-700 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:bg-primary-100 sm:px-3">
                   <IconeTicket className="h-4 w-4" />
                   <span>{cupons}</span>
                   <span className="hidden xl:inline">cupons</span>
                 </Link>
               ) : null}
               <NotificacoesMensagens onAbrir={() => setMenuAberto(false)} />
-              <Link href="/mensagens" aria-label="Mensagens" aria-current={mensagensAtivas ? "page" : undefined} className={`relative hidden h-10 w-10 items-center justify-center rounded-full border shadow-sm outline-none hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 sm:flex ${mensagensAtivas ? "border-primary-300 bg-primary-100 text-primary-700" : "border-border bg-surface text-muted hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"}`}>
+              <Link href="/mensagens" aria-label="Mensagens" aria-current={mensagensAtivas ? "page" : undefined} className={`relative hidden h-10 w-10 items-center justify-center rounded-full border shadow-sm outline-none transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 sm:flex ${mensagensAtivas ? "border-primary-300 bg-primary-100 text-primary-700" : "border-border bg-white/80 text-muted hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"}`}>
                 <IconeMensagem className="h-[21px] w-[21px]" />
               </Link>
               <span className="mx-1 hidden h-6 w-px bg-border xl:block" />
               <div className="relative ml-1 flex items-center gap-1">
-                <Link href="/perfil" aria-label="Ir para meu perfil" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary-100 text-sm font-bold text-primary-700 outline-none ring-2 ring-transparent transition hover:ring-primary-300 focus-visible:ring-primary-500">
+                <Link href="/perfil" aria-label="Ir para meu perfil" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary-100 text-sm font-bold text-primary-700 outline-none ring-2 ring-transparent transition hover:scale-105 hover:ring-primary-300 focus-visible:ring-primary-500">
                   {perfil?.avatar_url ? (
                     <Image src={perfil.avatar_url} alt={`Foto de ${perfil.nome}`} width={40} height={40} unoptimized className="h-full w-full object-cover" />
                   ) : (
