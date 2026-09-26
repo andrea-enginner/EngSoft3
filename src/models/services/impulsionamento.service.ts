@@ -155,7 +155,7 @@ export async function utilizarCupomImpulsionamento(
     return await usarCupom(sessao, anuncioId);
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : "";
-    if (/assinatura|cupom|anúncio|anuncio|impulsionado|proprietário|proprietario/i.test(mensagem)) {
+    if (/assinatura|cupom|cupons|anúncio|anuncio|impulsionado|proprietário|proprietario/i.test(mensagem)) {
       throw new ImpulsionamentoError(mensagem);
     }
     throw erro;
