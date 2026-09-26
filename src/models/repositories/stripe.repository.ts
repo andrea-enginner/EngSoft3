@@ -177,7 +177,6 @@ export async function criarCheckoutCuponsExtrasStripe(dados: {
     success_url: `${retorno}&resultado=cupons&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${retorno}&resultado=cancelado_compra`,
     client_reference_id: dados.compraId,
-    "automatic_payment_methods[enabled]": "true",
     "line_items[0][quantity]": "1",
     "line_items[0][price_data][currency]": "brl",
     "line_items[0][price_data][unit_amount]": String(dados.valorCentavos),
