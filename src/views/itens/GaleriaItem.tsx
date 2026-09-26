@@ -12,7 +12,7 @@ export function GaleriaItem({ imagens, titulo }: { imagens?: string[]; titulo: s
     <section aria-label={`Imagens de ${titulo}`} className="space-y-4">
       <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl bg-soft">
         {imagemPrincipal ? (
-          <Image src={imagemPrincipal} alt={titulo} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" priority unoptimized={imagemPrincipal.startsWith("http")} />
+          <Image src={imagemPrincipal} alt={titulo} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-contain p-3 sm:p-5" priority unoptimized={imagemPrincipal.startsWith("http")} />
         ) : (
           <div className="flex flex-col items-center gap-3 text-primary-300">
             <IconeImagem className="h-20 w-20" />
@@ -32,7 +32,7 @@ export function GaleriaItem({ imagens, titulo }: { imagens?: string[]; titulo: s
               aria-pressed={indiceSelecionado === indice}
               className={`relative h-20 w-20 overflow-hidden rounded-xl border-2 bg-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700 ${indiceSelecionado === indice ? "border-primary-500" : "border-transparent"}`}
             >
-              <Image src={imagem} alt={`${titulo}, imagem ${indice + 1}`} fill sizes="80px" className="object-cover" unoptimized={imagem.startsWith("http")} />
+              <Image src={imagem} alt={`${titulo}, imagem ${indice + 1}`} fill sizes="80px" className="object-contain p-1" unoptimized={imagem.startsWith("http")} />
             </button>
           ))}
         </div>

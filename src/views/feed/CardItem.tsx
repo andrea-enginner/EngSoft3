@@ -52,13 +52,14 @@ export function CardItem({
     <article className="relative rounded-[18px]">
     <Link href={`/itens/${item.id}`} className="flex min-h-[410px] flex-col overflow-hidden rounded-[18px] border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
       {/* Área da imagem */}
-      <div className="relative h-36 overflow-hidden bg-soft">
+      <div className="relative aspect-[4/3] overflow-hidden bg-soft">
         <Image
           src={item.imagem ?? "/file.svg"}
           alt={item.titulo}
           fill
           unoptimized={item.imagem?.startsWith("http")}
-          className="object-cover"
+          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+          className="object-contain p-2"
         />
         <span
           className={`absolute left-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold text-white ${tipo.classes}`}
