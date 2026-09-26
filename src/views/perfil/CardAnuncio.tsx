@@ -9,7 +9,7 @@ import Link from "next/link";
 import type { Anuncio } from "@/models/entities/anuncio";
 import { formatarTempoRelativo } from "@/lib/datas";
 import { formatarTarifa } from "@/lib/formatar-emprestimo";
-import { IconeImagem, IconeLapis, IconePublicar } from "@/views/comuns/Icones";
+import { IconeEstrela, IconeImagem, IconeLapis, IconePublicar } from "@/views/comuns/Icones";
 
 const ESTILO_TIPO = {
   doacao: { rotulo: "DOAÇÃO", classes: "bg-gradient-to-r from-doacao-claro to-doacao" },
@@ -21,14 +21,14 @@ export function CardAnuncio({ anuncio }: { anuncio: Anuncio }) {
 
   return (
     <article className="flex h-full min-h-[280px] flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="relative h-40 shrink-0 overflow-hidden bg-soft">
+      <Link href={`/itens/${anuncio.id}`} aria-label={`Ver anúncio ${anuncio.titulo}`} className="relative block h-40 shrink-0 overflow-hidden bg-gradient-to-br from-primary-50 via-soft to-primary-100/70 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500">
         {anuncio.imagem ? (
           <Image
             src={anuncio.imagem}
             alt={anuncio.titulo}
             fill
             sizes="(min-width: 1024px) 320px, (min-width: 640px) 50vw, 100vw"
-            className="object-cover"
+            className="object-contain p-2 mix-blend-multiply transition-transform duration-300 hover:scale-[1.02]"
             unoptimized={anuncio.imagem.startsWith("http")}
           />
         ) : (
@@ -48,12 +48,15 @@ export function CardAnuncio({ anuncio }: { anuncio: Anuncio }) {
             INATIVO
           </span>
         )}
-      </div>
+        {anuncio.impulsionado ? (
+          <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-primary-900 px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wide text-white shadow-md">
+            <IconeEstrela className="h-3 w-3 text-[#ffb347]" /> Impulsionado
+          </span>
+        ) : null}
+      </Link>
 
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="text-[15px] font-semibold leading-snug text-primary-900">
-          {anuncio.titulo}
-        </h3>
+        <h3 className="text-[15px] font-semibold leading-snug text-primary-900"><Link href={`/itens/${anuncio.id}`} className="rounded outline-none hover:text-primary-700 hover:underline focus-visible:ring-2 focus-visible:ring-primary-500">{anuncio.titulo}</Link></h3>
 
         <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-muted">
           {anuncio.descricao}
@@ -63,7 +66,7 @@ export function CardAnuncio({ anuncio }: { anuncio: Anuncio }) {
         <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3 text-[12px] text-muted">
           <span>{formatarTempoRelativo(anuncio.publicadoEm)}</span>
           <span className="flex items-center gap-1.5">
-            {anuncio.ativo && anuncio.tipo === "emprestimo" ? (
+            {anuncio.ativo && anuncio.tipo === "emprestimo" && !anuncio.impulsionado ? (
               <Link href={`/emprestimos/impulsionar?anuncio=${anuncio.id}`} className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-primary-700 hover:bg-primary-700 hover:text-white" aria-label={`Impulsionar anúncio ${anuncio.titulo}`}>
                 ↗ Impulsionar
               </Link>

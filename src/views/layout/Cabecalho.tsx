@@ -163,8 +163,8 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
           {usuarioLogado ? (
             <>
               {cupons !== null ? (
-                <Link href="/perfil" aria-label={`${cupons} cupons disponíveis`} title="Cupons de impulsionamento" className="inline-flex h-10 items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 text-xs font-bold text-primary-700 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:bg-primary-100 sm:px-3">
-                  <IconeTicket className="h-4 w-4" />
+                <Link href="/perfil" aria-label={`${cupons} cupons disponíveis`} title="Cupons de impulsionamento" className="inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-full border border-border bg-white/80 px-2.5 text-sm font-extrabold text-primary-700 shadow-sm outline-none transition hover:-translate-y-0.5 hover:border-primary-300 hover:bg-primary-50 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
+                  <IconeTicket className="h-[21px] w-[21px] text-muted" />
                   <span>{cupons}</span>
                 </Link>
               ) : null}

@@ -74,6 +74,7 @@ type RegistroAnuncio = {
   duracao_quantidade?: number | null;
   duracao_unidade?: string | null;
   anuncio_imagens?: { caminho: string; ordem: number }[] | null;
+  impulsionamentos_anuncio?: { fim_em: string }[] | null;
 };
 
 function normalizar(registro: RegistroAnuncio): Anuncio {
@@ -84,6 +85,10 @@ function normalizar(registro: RegistroAnuncio): Anuncio {
   const imagem = caminho
     ? caminho.startsWith("http") || caminho.startsWith("/") ? caminho : urlPublicaStorage("anuncios", caminho)
     : null;
+  const impulsionadoAte = (registro.impulsionamentos_anuncio ?? [])
+    .map(({ fim_em }) => fim_em)
+    .filter((fim) => new Date(fim).getTime() > Date.now())
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
   return {
     id: String(registro.id),
     tipo,
@@ -100,6 +105,8 @@ function normalizar(registro: RegistroAnuncio): Anuncio {
     publicadoEm: registro.criado_em ?? new Date().toISOString(),
     ativo: registro.ativo ?? true,
     naListaDesejos: false,
+    impulsionado: Boolean(impulsionadoAte),
+    impulsionadoAte,
   };
 }
 
@@ -107,7 +114,7 @@ export async function buscarAnunciosDoUsuario(sessao: SessaoUsuario | null): Pro
   if (!sessao) return null;
 
   const registros = await consultarSupabase<RegistroAnuncio>(
-    `anuncios?select=*,anuncio_imagens(caminho,ordem)&usuario_id=eq.${sessao.usuarioId}&order=criado_em.desc`,
+    `anuncios?select=*,anuncio_imagens(caminho,ordem),impulsionamentos_anuncio(fim_em)&usuario_id=eq.${sessao.usuarioId}&order=criado_em.desc`,
     sessao.token,
   );
   return registros ? registros.map(normalizar) : null;
