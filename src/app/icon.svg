@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="fundo" x1="8" y1="6" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7c62bb"/>
+      <stop offset="1" stop-color="#4d2898"/>
+    </linearGradient>
+    <linearGradient id="dourado" x1="18" y1="16" x2="48" y2="49" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffe28a"/>
+      <stop offset="1" stop-color="#e9b949"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#fundo)"/>
+  <path d="M17 31c.5-8.2 7.2-14.7 15.5-14.7 5 0 9.6 2.4 12.5 6.2" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+  <path d="m43 15 3.5 8.8-9.4.9" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M47 33c-.5 8.2-7.2 14.7-15.5 14.7-5 0-9.6-2.4-12.5-6.2" fill="none" stroke="url(#dourado)" stroke-width="6" stroke-linecap="round"/>
+  <path d="m21 49-3.5-8.8 9.4-.9" fill="none" stroke="url(#dourado)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
