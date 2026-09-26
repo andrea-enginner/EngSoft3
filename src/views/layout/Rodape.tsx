@@ -24,15 +24,24 @@ export function Rodape({ autenticado }: { autenticado: boolean }) {
   const links = autenticado ? LINKS_AUTENTICADOS : LINKS_PUBLICOS;
 
   return (
-    <footer className="relative mt-16 overflow-hidden border-t border-primary-300/25 bg-[#7054b2] text-white">
-      <div aria-hidden="true" className="absolute inset-0 bg-cover bg-[position:68%_54%] opacity-25" style={{ backgroundImage: "url('/auth-background.jpg')" }} />
-      <div aria-hidden="true" className="absolute inset-0 bg-[#6545a8]/85" />
-      <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-[#5b4786]/85 via-[#654f91]/55 to-[#504a70]/70" />
+    <footer className="relative mt-16 overflow-hidden border-t border-white/10 bg-[#7054b2] text-white">
+      <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(255,255,255,.10),transparent_28%),radial-gradient(circle_at_88%_78%,rgba(255,102,89,.10),transparent_24%)]" />
+      <svg aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full opacity-70" viewBox="0 0 1440 430" preserveAspectRatio="none">
+        <path fill="rgba(255,255,255,.045)" d="M0 0h510c-76 57-54 101 68 132 127 32 145 91 38 137-81 35-115 89-70 161H0V0Z" />
+        <path fill="rgba(76,29,149,.16)" d="M1440 0h-310c67 64 52 114-46 151-111 42-119 103-25 148 66 32 83 76 51 131h330V0Z" />
+        <path fill="none" stroke="rgba(255,255,255,.09)" strokeWidth="2" d="M-80 355c238-109 420 17 631-65 178-69 343-34 506 21 151 50 276 35 463-64" />
+      </svg>
       <div className="relative mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:py-14">
         <div className="grid gap-10 lg:grid-cols-[1.15fr_0.7fr_1fr] lg:gap-16">
           <div>
-            <Link href="/feed" aria-label="Ciclo — início" className="inline-flex items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary-100 focus-visible:ring-offset-4 focus-visible:ring-offset-[#6545a8]">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15"><Image src="/ciclo-logo.png" alt="" width={42} height={42} className="h-10 w-10 object-contain" /></span>
+            <Link href="/feed" aria-label="Ciclo — início" className="inline-flex items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary-100 focus-visible:ring-offset-4 focus-visible:ring-offset-[#7054b2]">
+              <span className="relative grid h-14 w-14 place-items-center">
+                <Image src="/ciclo-sacola-sem-seta.png" alt="" width={54} height={54} className="h-[54px] w-[54px] object-contain drop-shadow-[0_5px_7px_rgba(39,22,72,.24)]" />
+                <svg aria-hidden="true" viewBox="0 0 42 24" className="pointer-events-none absolute bottom-[8px] left-[calc(50%-1px)] h-[19px] w-[34px] -translate-x-1/2 text-[#ff6659]">
+                  <path d="M3.5 5.5c4.8 8.6 12 12.8 20.2 12.1 5.8-.5 10.6-3.2 14.2-8.1" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
+                  <path d="m31.7 8.2 6.5 1.1-1.1 6.4" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
               <span className="text-2xl font-bold tracking-[-0.03em]">Ciclo</span>
             </Link>
             <p className="mt-5 max-w-md text-sm leading-6 text-white/70 sm:text-base">Itens ganham novos usos, pessoas se aproximam e o consumo fica mais consciente. Tudo começa perto de casa.</p>

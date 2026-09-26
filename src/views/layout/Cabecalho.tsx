@@ -54,6 +54,7 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [cupons, setCupons] = useState<number | null>(null);
+  const [movimentoSeta, setMovimentoSeta] = useState<"parada" | "entrada" | "saida">("parada");
 
   useEffect(() => {
     const supabase = createClient();
@@ -116,16 +117,31 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
     <header className="sticky top-0 z-50 overflow-visible border-b border-primary-100 bg-white/95 shadow-[0_8px_24px_-22px_rgba(76,29,149,0.55)] backdrop-blur-xl">
       <svg aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 h-full" style={{ width: "max(250px, calc((100vw - 1280px) / 2 + 300px))" }} viewBox="0 0 520 72" preserveAspectRatio="none">
         <path fill="#7054b2" d="M0 0h444c-18 8-14 16 6 22 24 7 25 18 2 26-21 8-30 16-15 24H0V0Z" />
-        <path fill="none" stroke="rgba(255,255,255,.16)" strokeWidth="2" d="M0 55c116-18 204 15 315-10 57-13 95-10 137 3" />
         <path fill="rgba(255,255,255,.06)" d="M0 0h344c-38 13-59 26-31 40 20 10 11 21-22 32H0V0Z" />
       </svg>
       <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary-400/60 to-transparent" />
       <div className="relative mx-auto flex h-[72px] max-w-7xl items-center gap-5 px-5 sm:px-8">
-        <Link href="/feed" aria-label="Ciclo — início" className="group/logo flex shrink-0 items-center gap-2.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
-          <span className="relative grid h-14 w-14 place-items-center transition duration-300 group-hover/logo:-translate-y-0.5 group-hover/logo:scale-105">
-            <Image src="/icon.png" alt="" width={54} height={54} className="relative h-[54px] w-[54px] object-contain drop-shadow-[0_5px_7px_rgba(39,22,72,.28)]" priority />
+        <Link href="/feed" aria-label="Ciclo — início" onMouseEnter={() => setMovimentoSeta("entrada")} onMouseLeave={() => setMovimentoSeta("saida")} className="group/logo relative isolate flex shrink-0 items-center gap-2.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
+          <span className="relative z-10 grid h-14 w-14 place-items-center transition duration-300 group-hover/logo:-translate-y-0.5 group-hover/logo:scale-105">
+            <Image src="/ciclo-sacola-sem-seta.png" alt="" width={54} height={54} className="relative h-[54px] w-[54px] object-contain drop-shadow-[0_5px_7px_rgba(39,22,72,.28)]" priority />
+            <span aria-hidden="true" className="pointer-events-none absolute bottom-[5px] left-1/2 h-[31px] w-[44px] -translate-x-1/2 overflow-hidden [clip-path:polygon(12%_0,88%_0,100%_100%,0_100%)]">
+              <svg viewBox="0 0 42 24" className={`absolute bottom-[3px] left-[calc(50%-1px)] h-[19px] w-[34px] -translate-x-1/2 text-[#ff6659] ${movimentoSeta === "parada" ? "opacity-100" : "opacity-0"}`}>
+                <path d="M3.5 5.5c4.8 8.6 12 12.8 20.2 12.1 5.8-.5 10.6-3.2 14.2-8.1" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
+                <path d="m31.7 8.2 6.5 1.1-1.1 6.4" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {movimentoSeta !== "parada" ? (
+                <span className="absolute bottom-[3px] left-[calc(50%-1px)] h-[19px] w-[34px] -translate-x-1/2">
+                  <span onAnimationEnd={() => movimentoSeta === "saida" && setMovimentoSeta("parada")} className={`block h-full w-full origin-[52%_46%] transform-gpu ${movimentoSeta === "entrada" ? "animacao-seta-entrada" : "animacao-seta-saida"}`}>
+                    <svg viewBox="0 0 42 24" className="block h-full w-full text-[#ff6659]">
+                      <path d="M3.5 5.5c4.8 8.6 12 12.8 20.2 12.1 5.8-.5 10.6-3.2 14.2-8.1" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
+                      <path d="m31.7 8.2 6.5 1.1-1.1 6.4" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                </span>
+              ) : null}
+            </span>
           </span>
-          <span className="hidden text-[1.35rem] font-extrabold tracking-[-0.025em] text-white drop-shadow-sm transition group-hover/logo:tracking-normal sm:block">Ciclo</span>
+          <span className="relative z-10 hidden text-[1.35rem] font-extrabold tracking-[-0.025em] text-white drop-shadow-sm transition group-hover/logo:tracking-normal sm:block">Ciclo</span>
         </Link>
 
         <nav className="hidden flex-1 justify-center lg:flex" aria-label="Navegação principal">
