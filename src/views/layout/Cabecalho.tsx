@@ -113,14 +113,19 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
   const navegacao = usuarioLogado ? NAVEGACAO_AUTENTICADA : NAVEGACAO_PUBLICA;
 
   return (
-    <header className="sticky top-0 z-50 overflow-visible border-b border-primary-100 bg-gradient-to-r from-white/95 via-primary-50/45 to-white/95 shadow-[0_8px_24px_-22px_rgba(76,29,149,0.55)] backdrop-blur-xl">
+    <header className="sticky top-0 z-50 overflow-visible border-b border-primary-100 bg-white/95 shadow-[0_8px_24px_-22px_rgba(76,29,149,0.55)] backdrop-blur-xl">
+      <svg aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 h-full" style={{ width: "max(250px, calc((100vw - 1280px) / 2 + 300px))" }} viewBox="0 0 520 72" preserveAspectRatio="none">
+        <path fill="#7054b2" d="M0 0h444c-18 8-14 16 6 22 24 7 25 18 2 26-21 8-30 16-15 24H0V0Z" />
+        <path fill="none" stroke="rgba(255,255,255,.16)" strokeWidth="2" d="M0 55c116-18 204 15 315-10 57-13 95-10 137 3" />
+        <path fill="rgba(255,255,255,.06)" d="M0 0h344c-38 13-59 26-31 40 20 10 11 21-22 32H0V0Z" />
+      </svg>
       <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary-400/60 to-transparent" />
       <div className="relative mx-auto flex h-[72px] max-w-7xl items-center gap-5 px-5 sm:px-8">
         <Link href="/feed" aria-label="Ciclo — início" className="group/logo flex shrink-0 items-center gap-2.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
-          <span className="relative grid h-12 w-12 place-items-center rounded-2xl bg-primary-50 ring-1 ring-primary-100 transition duration-300 group-hover/logo:scale-105 group-hover/logo:bg-primary-100">
-            <Image src="/ciclo-logo.png" alt="" width={44} height={44} className="relative h-11 w-11 object-contain" priority />
+          <span className="relative grid h-14 w-14 place-items-center transition duration-300 group-hover/logo:-translate-y-0.5 group-hover/logo:scale-105">
+            <Image src="/icon.png" alt="" width={54} height={54} className="relative h-[54px] w-[54px] object-contain drop-shadow-[0_5px_7px_rgba(39,22,72,.28)]" priority />
           </span>
-          <span className="hidden text-xl font-bold tracking-[-0.03em] text-primary-900 transition-colors group-hover/logo:text-primary-700 sm:block">Ciclo</span>
+          <span className="hidden text-[1.35rem] font-extrabold tracking-[-0.025em] text-white drop-shadow-sm transition group-hover/logo:tracking-normal sm:block">Ciclo</span>
         </Link>
 
         <nav className="hidden flex-1 justify-center lg:flex" aria-label="Navegação principal">
