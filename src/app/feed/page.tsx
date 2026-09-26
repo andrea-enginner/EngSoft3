@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { carregarFeed } from "@/controllers/feed.controller";
 import { BarraFiltros } from "@/views/feed/BarraFiltros";
 import { CampoBusca } from "@/views/feed/CampoBusca";
-import { CardItem } from "@/views/feed/CardItem";
+import { ListaItensFeed } from "@/views/feed/ListaItensFeed";
 import { sessaoAtual } from "@/lib/supabase/sessao";
 
 export const dynamic = "force-dynamic";
@@ -34,15 +34,12 @@ export default async function FeedPage({ searchParams }: PageProps<"/feed">) {
       </Suspense>
       <BarraFiltros categorias={categorias} filtroSelecionado={filtroSelecionado} />
     </div>
-    {itens.length ? <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      {itens.map((item) => (
-        <CardItem
-          key={item.id}
-          item={item}
-          autenticado={Boolean(sessao)}
-          destino={destino}
-        />
-      ))}
-    </div> : <p className="mt-12 text-center text-muted">{mensagemVazio}</p>}
+    {itens.length ? (
+      <ListaItensFeed
+        itens={itens}
+        autenticado={Boolean(sessao)}
+        destino={destino}
+      />
+    ) : <p className="mt-12 text-center text-muted">{mensagemVazio}</p>}
   </main>;
 }
