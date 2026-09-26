@@ -32,17 +32,23 @@ export function AuthLayout({
           <div className="relative z-10 flex w-full flex-col px-12 py-12">
             
             {/* Logo */}
-            <div className="flex items-center gap-4">
-              <Image
-                src="/ciclo-logo.png"
-                alt="Ciclo"
-                width={54}
-                height={54}
-                className="rounded-xl"
-                priority
-              />
+            <div className="flex items-center gap-3">
+              <span className="relative grid h-14 w-14 place-items-center">
+                <Image
+                  src="/ciclo-sacola-sem-seta.png"
+                  alt=""
+                  width={54}
+                  height={54}
+                  className="h-[54px] w-[54px] object-contain drop-shadow-[0_5px_7px_rgba(39,22,72,.24)]"
+                  priority
+                />
+                <svg aria-hidden="true" viewBox="0 0 42 24" className="pointer-events-none absolute bottom-[8px] left-[calc(50%-1px)] h-[19px] w-[34px] -translate-x-1/2 text-[#ff6659]">
+                  <path d="M3.5 5.5c4.8 8.6 12 12.8 20.2 12.1 5.8-.5 10.6-3.2 14.2-8.1" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
+                  <path d="m31.7 8.2 6.5 1.1-1.1 6.4" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
 
-              <span className="text-[27px] font-normal">
+              <span className="text-[27px] font-extrabold tracking-[-0.025em]">
                 Ciclo
               </span>
             </div>
