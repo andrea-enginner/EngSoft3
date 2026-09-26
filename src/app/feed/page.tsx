@@ -29,9 +29,9 @@ export default async function FeedPage({ searchParams }: PageProps<"/feed">) {
 
   return <main className="mx-auto w-full max-w-[1280px] px-6 py-8">
     <header className="mb-7">
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary-500">Catálogo da comunidade</p>
-      <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-primary-900 sm:text-3xl">Encontre o que precisa sem precisar comprar</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-base">Todos os itens deste catálogo estão disponíveis para empréstimo. Escolha o período, envie sua solicitação e combine a retirada com o proprietário.</p>
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary-500">Itens para empréstimo</p>
+      <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-primary-900 sm:text-3xl">Precisa por pouco tempo? Pegue emprestado no Ciclo.</h1>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-base">Escolha um item, defina por quantos dias ou semanas precisa e pague somente pelo período combinado com o proprietário.</p>
     </header>
     <div className="flex flex-wrap items-end justify-between gap-3">
       <Suspense fallback={<div className="h-11 w-full min-w-[280px] flex-1 rounded-[10px] border border-border bg-white sm:max-w-md" />}>
