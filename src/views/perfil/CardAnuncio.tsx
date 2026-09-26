@@ -50,7 +50,7 @@ export function CardAnuncio({ anuncio }: { anuncio: Anuncio }) {
         )}
         {anuncio.impulsionado ? (
           <span className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-primary-900 px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wide text-white shadow-md">
-            <IconeEstrela className="h-3 w-3 text-[#ffb347]" /> Destaque
+            <IconeEstrela className="h-3 w-3 text-[#ffb347]" /> Impulsionado
           </span>
         ) : null}
       </Link>
