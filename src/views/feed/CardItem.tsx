@@ -52,7 +52,7 @@ export function CardItem({
     <article className="relative rounded-[18px]">
     <Link href={`/itens/${item.id}`} className="flex min-h-[410px] flex-col overflow-hidden rounded-[18px] border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
       {/* Área da imagem */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-soft">
+      <div className="relative aspect-[4/3] overflow-hidden bg-white shadow-[inset_0_0_28px_rgba(76,29,149,0.06)]">
         <Image
           src={item.imagem ?? "/file.svg"}
           alt={item.titulo}
