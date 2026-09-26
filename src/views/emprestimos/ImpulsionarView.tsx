@@ -34,8 +34,8 @@ function ItemSelecionado({ detalhes }: { detalhes: NonNullable<ResultadoPaginaIm
     <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <p className="mb-4 text-xs font-bold uppercase tracking-wide text-slate-600">Item selecionado</p>
       <div className="flex gap-4">
-        <div className="relative h-28 w-32 shrink-0 overflow-hidden rounded-xl bg-soft">
-          {anuncio.imagem ? <Image src={anuncio.imagem} alt={anuncio.titulo} fill sizes="128px" className="object-cover" unoptimized={anuncio.imagem.startsWith("http")} /> : <span className="grid h-full place-items-center text-primary-300"><IconeImagem className="h-9 w-9" /></span>}
+        <div className="relative h-28 w-32 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-primary-50 via-soft to-primary-100/70 shadow-[inset_0_0_20px_rgba(76,29,149,0.06)]">
+          {anuncio.imagem ? <Image src={anuncio.imagem} alt={anuncio.titulo} fill sizes="128px" className="object-contain p-2 mix-blend-multiply" unoptimized={anuncio.imagem.startsWith("http")} /> : <span className="grid h-full place-items-center text-primary-300"><IconeImagem className="h-9 w-9" /></span>}
         </div>
         <div className="min-w-0">
           {anuncio.categoria ? <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase text-emerald-700">{anuncio.categoria}</span> : null}
