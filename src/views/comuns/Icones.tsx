@@ -255,9 +255,12 @@ export function IconeCartao({ className }: PropsIcone) {
 
 export function IconeTicket({ className }: PropsIcone) {
   return (
-    <svg {...BASE} className={className} strokeWidth={1.8}>
-      <path d="M4 6h16v4a2.2 2.2 0 0 0 0 4v4H4v-4a2.2 2.2 0 0 0 0-4V6Z" />
-      <path d="M13 8v2M13 14v2" />
+    <svg {...BASE} className={className} strokeWidth={1.7}>
+      <path d="M4.5 5.5h15v3.2a3.2 3.2 0 0 0 0 6.6v3.2h-15v-3.2a3.2 3.2 0 0 0 0-6.6V5.5Z" />
+      <path d="M9.2 11a3.4 3.4 0 0 1 5.9-1.5l.8 1" />
+      <path d="m13.5 10.7 2.4-.2-.2-2.4" />
+      <path d="M15.1 13a3.4 3.4 0 0 1-5.9 1.5l-.8-1" />
+      <path d="m10.5 13.3-2.1.2.2 2.2" />
     </svg>
   );
 }

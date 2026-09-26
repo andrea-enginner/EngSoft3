@@ -73,6 +73,7 @@ type RegistroAnuncio = {
   valor_unitario_centavos?: number | null;
   duracao_quantidade?: number | null;
   duracao_unidade?: string | null;
+  impulsionado_ate?: string | null;
   anuncio_imagens?: { caminho: string; ordem: number }[] | null;
 };
 
@@ -100,6 +101,8 @@ function normalizar(registro: RegistroAnuncio): Anuncio {
     publicadoEm: registro.criado_em ?? new Date().toISOString(),
     ativo: registro.ativo ?? true,
     naListaDesejos: false,
+    impulsionado: Boolean(registro.impulsionado_ate && new Date(registro.impulsionado_ate).getTime() > Date.now()),
+    impulsionadoAte: registro.impulsionado_ate ?? null,
   };
 }
 
