@@ -166,7 +166,6 @@ export function Cabecalho({ autenticado }: { autenticado: boolean }) {
                 <Link href="/perfil" aria-label={`${cupons} cupons disponíveis`} title="Cupons de impulsionamento" className="inline-flex h-10 items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-2.5 text-xs font-bold text-primary-700 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-300 hover:bg-primary-100 sm:px-3">
                   <IconeTicket className="h-4 w-4" />
                   <span>{cupons}</span>
-                  <span className="hidden xl:inline">cupons</span>
                 </Link>
               ) : null}
               <NotificacoesMensagens onAbrir={() => setMenuAberto(false)} />
