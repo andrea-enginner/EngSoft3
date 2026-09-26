@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Camada VIEW — cartão de um item do feed.
  *
@@ -9,8 +11,8 @@
  * deve definir o formato do dado do domínio — só desenhá-lo.
  */
 
-import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import type { AnuncioResumo } from "@/models/entities/item";
 import { formatarTarifa } from "@/lib/formatar-emprestimo";
 import {
@@ -21,6 +23,7 @@ import {
   IconeLocal,
 } from "@/views/comuns/Icones";
 import { BotaoListaDesejos } from "@/views/itens/BotaoListaDesejos";
+import { GaleriaCardFeed } from "@/views/feed/GaleriaCardFeed";
 
 export type ItemFeed = AnuncioResumo;
 
@@ -47,20 +50,17 @@ export function CardItem({
   destino: string;
 }) {
   const tipo = ESTILO_TIPO[item.tipo];
+  const [mouseSobre, setMouseSobre] = useState(false);
+  const imagens = item.imagens?.length
+    ? item.imagens
+    : [item.imagem ?? "/file.svg"];
 
   return (
-    <article className="relative rounded-[18px]">
+    <article className="relative rounded-[18px]" onMouseEnter={() => setMouseSobre(true)} onMouseLeave={() => setMouseSobre(false)}>
     <Link href={`/itens/${item.id}`} className="flex min-h-[410px] flex-col overflow-hidden rounded-[18px] border border-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
       {/* Área da imagem */}
       <div className="relative aspect-[4/3] overflow-hidden bg-white shadow-[inset_0_0_28px_rgba(76,29,149,0.06)]">
-        <Image
-          src={item.imagem ?? "/file.svg"}
-          alt={item.titulo}
-          fill
-          unoptimized={item.imagem?.startsWith("http")}
-          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-          className="object-contain p-2"
-        />
+        <GaleriaCardFeed imagens={imagens} titulo={item.titulo} ativa={mouseSobre} />
         <span
           className={`absolute left-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold text-white ${tipo.classes}`}
         >
